@@ -2,29 +2,24 @@
 
 import { useState, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import type {
-  UserPreferences,
-  ProductRecommendation,
-  RecommendResponse,
-} from "@/app/lib/types";
+import type { TravelPreferences, TravelRecommendation, TravelResponse } from "@/app/lib/types";
 import { SearchForm } from "@/app/components/SearchForm";
-import { ProductCard } from "@/app/components/ProductCard";
-import { SettingsPanel } from "@/app/components/SettingsPanel";
+import { TravelCard } from "@/app/components/TravelCard";
+import { TravelSettingsPanel } from "@/app/components/TravelSettingsPanel";
 import { LoadingAnimation } from "@/app/components/LoadingAnimation";
 import { LocaleSwitch } from "@/app/components/LocaleSwitch";
 import { NavMenu } from "@/app/components/NavMenu";
 
-export default function Home() {
-  const t = useTranslations("Page");
+export default function TravelPage() {
+  const t = useTranslations("TravelPage");
   const locale = useLocale();
 
   const [query, setQuery] = useState("");
-  const [preferences, setPreferences] = useState<UserPreferences>({
-    minPrice: 0,
-    maxPrice: 20000,
-    qualityPriority: 50,
+  const [preferences, setPreferences] = useState<TravelPreferences>({
+    budget: 15000,
+    comfort: 50,
   });
-  const [result, setResult] = useState<ProductRecommendation | null>(null);
+  const [result, setResult] = useState<TravelRecommendation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -37,12 +32,12 @@ export default function Home() {
     setResult(null);
 
     try {
-      const res = await fetch("/api/recommend", {
+      const res = await fetch("/api/travel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query, preferences, locale }),
       });
-      const data: RecommendResponse = await res.json();
+      const data: TravelResponse = await res.json();
 
       if (data.success && data.recommendation) {
         setResult(data.recommendation);
@@ -75,18 +70,20 @@ export default function Home() {
         onQueryChange={setQuery}
         onSubmit={handleSearch}
         isLoading={isLoading}
+        placeholderKey="TravelSearch"
+        buttonKey="TravelSearch"
       />
 
-      <SettingsPanel
+      <TravelSettingsPanel
         preferences={preferences}
         onPreferencesChange={setPreferences}
         isOpen={settingsOpen}
         onToggle={toggleSettings}
       />
 
-      {isLoading && <LoadingAnimation />}
+      {isLoading && <LoadingAnimation loadingKey="TravelLoading" />}
 
-      {result && !isLoading && <ProductCard recommendation={result} />}
+      {result && !isLoading && <TravelCard recommendation={result} />}
 
       {error && !isLoading && (
         <p className="mt-8 text-center text-muted">{error}</p>

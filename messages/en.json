@@ -1,0 +1,101 @@
+{
+  "Nav": {
+    "things": "Things",
+    "stocks": "Stocks",
+    "travel": "Travel"
+  },
+  "Page": {
+    "title": "What do you want to buy?",
+    "error": "Could not find a recommendation.",
+    "genericError": "Something went wrong. Please try again."
+  },
+  "Search": {
+    "placeholder": "printer, running shoes, coffee maker...",
+    "button": "Show me"
+  },
+  "Product": {
+    "buyOn": "Buy on {retailer}",
+    "on": "on {retailer}",
+    "affiliateDisclosure": "Affiliate link – we may earn a commission on purchases"
+  },
+  "Settings": {
+    "title": "Preferences",
+    "priceRange": "Price range",
+    "qualityPriority": "Quality priority:",
+    "cheapest": "Cheapest",
+    "balanced": "Balanced",
+    "bestQuality": "Best quality"
+  },
+  "Loading": {
+    "searching": "Searching the web...",
+    "reviews": "Reading reviews...",
+    "comparing": "Comparing products...",
+    "finding": "Finding the best one..."
+  },
+  "StocksPage": {
+    "title": "What do you want to invest in?",
+    "error": "Could not find an investment.",
+    "genericError": "Something went wrong. Please try again."
+  },
+  "StocksSearch": {
+    "placeholder": "tech, bitcoin, healthcare, gold...",
+    "button": "Show me"
+  },
+  "Stock": {
+    "buyOn": "Buy on Avanza",
+    "sector": "Sector: {sector}",
+    "ticker": "({ticker})",
+    "stock": "Stock",
+    "crypto": "Crypto",
+    "certificate": "Certificate",
+    "affiliateDisclosure": "Affiliate link – we may earn a commission on sign-ups"
+  },
+  "StockSettings": {
+    "title": "Preferences",
+    "risk": "Risk:",
+    "lowRisk": "Low",
+    "mediumRisk": "Medium",
+    "highRisk": "High",
+    "reward": "Reward:",
+    "lowReward": "Low",
+    "mediumReward": "Medium",
+    "highReward": "High",
+    "maxPrice": "Max price per share"
+  },
+  "StockLoading": {
+    "searching": "Searching stocks...",
+    "analyzing": "Analyzing the market...",
+    "comparing": "Comparing options...",
+    "finding": "Finding the best one..."
+  },
+  "TravelPage": {
+    "title": "Where do you want to travel?",
+    "error": "Could not find a trip.",
+    "genericError": "Something went wrong. Please try again."
+  },
+  "TravelSearch": {
+    "placeholder": "Thailand, New York, Canary Islands...",
+    "button": "Show me"
+  },
+  "Travel": {
+    "buyOn": "Book on {provider}",
+    "dates": "{dates}",
+    "flight": "Flight",
+    "hotel": "Hotel",
+    "package": "Package"
+  },
+  "TravelSettings": {
+    "title": "Preferences",
+    "budget": "Max budget",
+    "comfort": "Comfort:",
+    "cheapest": "Cheapest",
+    "balanced": "Balanced",
+    "premium": "Premium"
+  },
+  "TravelLoading": {
+    "searching": "Searching trips...",
+    "analyzing": "Comparing prices...",
+    "comparing": "Checking availability...",
+    "finding": "Finding the best deal..."
+  }
+}

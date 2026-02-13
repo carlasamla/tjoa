@@ -1,0 +1,101 @@
+{
+  "Nav": {
+    "things": "Grejer",
+    "stocks": "Aktier",
+    "travel": "Resor"
+  },
+  "Page": {
+    "title": "Vad vill du köpa?",
+    "error": "Kunde inte hitta en rekommendation.",
+    "genericError": "Något gick fel. Försök igen."
+  },
+  "Search": {
+    "placeholder": "skrivare, löparskor, kaffemaskin...",
+    "button": "Visa"
+  },
+  "Product": {
+    "buyOn": "Köp på {retailer}",
+    "on": "på {retailer}",
+    "affiliateDisclosure": "Affiliatelänk – vi kan få ersättning vid köp"
+  },
+  "Settings": {
+    "title": "Inställningar",
+    "priceRange": "Prisintervall",
+    "qualityPriority": "Kvalitetsprioritet:",
+    "cheapest": "Billigast",
+    "balanced": "Balanserad",
+    "bestQuality": "Bäst kvalitet"
+  },
+  "Loading": {
+    "searching": "Söker på nätet...",
+    "reviews": "Läser recensioner...",
+    "comparing": "Jämför produkter...",
+    "finding": "Hittar den bästa..."
+  },
+  "StocksPage": {
+    "title": "Vad vill du investera i?",
+    "error": "Kunde inte hitta en investering.",
+    "genericError": "Något gick fel. Försök igen."
+  },
+  "StocksSearch": {
+    "placeholder": "teknik, bitcoin, hälsovård, guld...",
+    "button": "Visa"
+  },
+  "Stock": {
+    "buyOn": "Köp på Avanza",
+    "sector": "Sektor: {sector}",
+    "ticker": "({ticker})",
+    "stock": "Aktie",
+    "crypto": "Krypto",
+    "certificate": "Certifikat",
+    "affiliateDisclosure": "Affiliatelänk – vi kan få ersättning vid registrering"
+  },
+  "StockSettings": {
+    "title": "Inställningar",
+    "risk": "Risk:",
+    "lowRisk": "Låg",
+    "mediumRisk": "Medel",
+    "highRisk": "Hög",
+    "reward": "Avkastning:",
+    "lowReward": "Låg",
+    "mediumReward": "Medel",
+    "highReward": "Hög",
+    "maxPrice": "Max pris per aktie"
+  },
+  "StockLoading": {
+    "searching": "Söker aktier...",
+    "analyzing": "Analyserar marknaden...",
+    "comparing": "Jämför alternativ...",
+    "finding": "Hittar den bästa..."
+  },
+  "TravelPage": {
+    "title": "Vart vill du resa?",
+    "error": "Kunde inte hitta en resa.",
+    "genericError": "Något gick fel. Försök igen."
+  },
+  "TravelSearch": {
+    "placeholder": "Thailand, New York, Kanarieöarna...",
+    "button": "Visa"
+  },
+  "Travel": {
+    "buyOn": "Boka på {provider}",
+    "dates": "{dates}",
+    "flight": "Flyg",
+    "hotel": "Hotell",
+    "package": "Paketresa"
+  },
+  "TravelSettings": {
+    "title": "Inställningar",
+    "budget": "Max budget",
+    "comfort": "Komfort:",
+    "cheapest": "Billigast",
+    "balanced": "Balanserad",
+    "premium": "Premium"
+  },
+  "TravelLoading": {
+    "searching": "Söker resor...",
+    "analyzing": "Jämför priser...",
+    "comparing": "Kollar tillgänglighet...",
+    "finding": "Hittar det bästa erbjudandet..."
+  }
+}
