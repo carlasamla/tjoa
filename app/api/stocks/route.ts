@@ -119,7 +119,7 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Avanza.`;
     };
 
     const searchId = crypto.randomUUID();
-    analytics.logSearch({
+    await analytics.logSearch({
       id: searchId,
       type: "stock",
       query: query.trim(),

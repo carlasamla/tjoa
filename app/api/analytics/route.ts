@@ -9,12 +9,12 @@ export async function POST(request: NextRequest) {
     if (type === "click") {
       const { searchId, link } = body;
       if (searchId && link) {
-        analytics.logClick(searchId, link);
+        await analytics.logClick(searchId, link);
       }
     } else if (type === "engagement") {
       const { page, sessionId, duration } = body;
       if (page && sessionId && duration) {
-        analytics.logEngagement({
+        await analytics.logEngagement({
           page,
           sessionId,
           duration,

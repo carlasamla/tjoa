@@ -112,7 +112,7 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Swedish retailers.`
     };
 
     const searchId = crypto.randomUUID();
-    analytics.logSearch({
+    await analytics.logSearch({
       id: searchId,
       type: "product",
       query: query.trim(),
