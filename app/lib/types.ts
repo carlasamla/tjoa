@@ -48,24 +48,3 @@ export interface StockResponse {
   recommendation?: StockRecommendation;
   error?: string;
 }
-
-export interface TravelPreferences {
-  budget: number; // max budget in SEK
-  comfort: number; // 0 = cheapest, 50 = balanced, 100 = most comfortable
-}
-
-export interface TravelRecommendation {
-  destination: string;
-  price: string;
-  reason: string;
-  buyLink: string;
-  provider: string;
-  type: "flight" | "hotel" | "package";
-  dates: string;
-}
-
-export interface TravelResponse {
-  success: boolean;
-  recommendation?: TravelRecommendation;
-  error?: string;
-}

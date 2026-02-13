@@ -7,7 +7,6 @@ import { useTranslations } from "next-intl";
 const links = [
   { href: "/", key: "things" },
   { href: "/stocks", key: "stocks" },
-  { href: "/travel", key: "travel" },
 ] as const;
 
 export function NavMenu() {

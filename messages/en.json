@@ -1,8 +1,7 @@
 {
   "Nav": {
     "things": "Things",
-    "stocks": "Stocks",
-    "travel": "Travel"
+    "stocks": "Stocks"
   },
   "Page": {
     "title": "What do you want to buy?",
@@ -67,35 +66,5 @@
     "analyzing": "Analyzing the market...",
     "comparing": "Comparing options...",
     "finding": "Finding the best one..."
-  },
-  "TravelPage": {
-    "title": "Where do you want to travel?",
-    "error": "Could not find a trip.",
-    "genericError": "Something went wrong. Please try again."
-  },
-  "TravelSearch": {
-    "placeholder": "Thailand, New York, Canary Islands...",
-    "button": "Show me"
-  },
-  "Travel": {
-    "buyOn": "Book on {provider}",
-    "dates": "{dates}",
-    "flight": "Flight",
-    "hotel": "Hotel",
-    "package": "Package"
-  },
-  "TravelSettings": {
-    "title": "Preferences",
-    "budget": "Max budget",
-    "comfort": "Comfort:",
-    "cheapest": "Cheapest",
-    "balanced": "Balanced",
-    "premium": "Premium"
-  },
-  "TravelLoading": {
-    "searching": "Searching trips...",
-    "analyzing": "Comparing prices...",
-    "comparing": "Checking availability...",
-    "finding": "Finding the best deal..."
   }
 }

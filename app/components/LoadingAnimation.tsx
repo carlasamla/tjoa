@@ -10,7 +10,6 @@ interface LoadingAnimationProps {
 const loadingKeys: Record<string, readonly string[]> = {
   Loading: ["searching", "reviews", "comparing", "finding"],
   StockLoading: ["searching", "analyzing", "comparing", "finding"],
-  TravelLoading: ["searching", "analyzing", "comparing", "finding"],
 };
 
 export function LoadingAnimation({ loadingKey = "Loading" }: LoadingAnimationProps) {

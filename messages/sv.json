@@ -1,8 +1,7 @@
 {
   "Nav": {
     "things": "Grejer",
-    "stocks": "Aktier",
-    "travel": "Resor"
+    "stocks": "Aktier"
   },
   "Page": {
     "title": "Vad vill du köpa?",
@@ -67,35 +66,5 @@
     "analyzing": "Analyserar marknaden...",
     "comparing": "Jämför alternativ...",
     "finding": "Hittar den bästa..."
-  },
-  "TravelPage": {
-    "title": "Vart vill du resa?",
-    "error": "Kunde inte hitta en resa.",
-    "genericError": "Något gick fel. Försök igen."
-  },
-  "TravelSearch": {
-    "placeholder": "Thailand, New York, Kanarieöarna...",
-    "button": "Visa"
-  },
-  "Travel": {
-    "buyOn": "Boka på {provider}",
-    "dates": "{dates}",
-    "flight": "Flyg",
-    "hotel": "Hotell",
-    "package": "Paketresa"
-  },
-  "TravelSettings": {
-    "title": "Inställningar",
-    "budget": "Max budget",
-    "comfort": "Komfort:",
-    "cheapest": "Billigast",
-    "balanced": "Balanserad",
-    "premium": "Premium"
-  },
-  "TravelLoading": {
-    "searching": "Söker resor...",
-    "analyzing": "Jämför priser...",
-    "comparing": "Kollar tillgänglighet...",
-    "finding": "Hittar det bästa erbjudandet..."
   }
 }
