@@ -23,6 +23,7 @@ export interface RecommendRequest {
 export interface RecommendResponse {
   success: boolean;
   recommendation?: ProductRecommendation;
+  searchId?: string;
   error?: string;
 }
 
@@ -46,5 +47,6 @@ export interface StockRecommendation {
 export interface StockResponse {
   success: boolean;
   recommendation?: StockRecommendation;
+  searchId?: string;
   error?: string;
 }

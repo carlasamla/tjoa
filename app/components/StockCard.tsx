@@ -5,16 +5,29 @@ import type { StockRecommendation } from "@/app/lib/types";
 
 interface StockCardProps {
   recommendation: StockRecommendation;
+  searchId?: string;
 }
 
 const typeKeys = ["stock", "crypto", "certificate"] as const;
 
-export function StockCard({ recommendation }: StockCardProps) {
+export function StockCard({ recommendation, searchId }: StockCardProps) {
   const t = useTranslations("Stock");
 
   const typeKey = typeKeys.includes(recommendation.type as (typeof typeKeys)[number])
     ? recommendation.type
     : "stock";
+
+  const handleBuyClick = () => {
+    if (searchId) {
+      navigator.sendBeacon(
+        "/api/analytics",
+        new Blob(
+          [JSON.stringify({ type: "click", searchId, link: recommendation.buyLink })],
+          { type: "application/json" },
+        ),
+      );
+    }
+  };
 
   return (
     <div
@@ -49,6 +62,7 @@ export function StockCard({ recommendation }: StockCardProps) {
           href={recommendation.buyLink}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={handleBuyClick}
           className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
         >
           {t("buyOn")}

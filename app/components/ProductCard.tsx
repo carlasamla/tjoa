@@ -6,11 +6,24 @@ import type { ProductRecommendation } from "@/app/lib/types";
 
 interface ProductCardProps {
   recommendation: ProductRecommendation;
+  searchId?: string;
 }
 
-export function ProductCard({ recommendation }: ProductCardProps) {
+export function ProductCard({ recommendation, searchId }: ProductCardProps) {
   const t = useTranslations("Product");
   const [imageError, setImageError] = useState(false);
+
+  const handleBuyClick = () => {
+    if (searchId) {
+      navigator.sendBeacon(
+        "/api/analytics",
+        new Blob(
+          [JSON.stringify({ type: "click", searchId, link: recommendation.buyLink })],
+          { type: "application/json" },
+        ),
+      );
+    }
+  };
 
   return (
     <div
@@ -46,6 +59,7 @@ export function ProductCard({ recommendation }: ProductCardProps) {
           href={recommendation.buyLink}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={handleBuyClick}
           className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
         >
         {t("buyOn", { retailer: recommendation.retailer })}

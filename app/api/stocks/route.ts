@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import crypto from "crypto";
 import type { StockRecommendation } from "@/app/lib/types";
 import { toAvanzaAffiliateLink } from "@/app/lib/affiliate-links";
+import { analytics } from "@/app/lib/analytics";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -116,7 +118,18 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Avanza.`;
       isAffiliate,
     };
 
-    return NextResponse.json({ success: true, recommendation });
+    const searchId = crypto.randomUUID();
+    analytics.logSearch({
+      id: searchId,
+      type: "stock",
+      query: query.trim(),
+      timestamp: Date.now(),
+      resultName: recommendation.stockName,
+      resultLink: recommendation.buyLink,
+      clicked: false,
+    });
+
+    return NextResponse.json({ success: true, recommendation, searchId });
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error("Stocks API error:", errMsg);

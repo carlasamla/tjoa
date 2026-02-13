@@ -13,8 +13,8 @@ import { SettingsPanel } from "@/app/components/SettingsPanel";
 import { LoadingAnimation } from "@/app/components/LoadingAnimation";
 
 import { NavMenu } from "@/app/components/NavMenu";
-import { Logo } from "@/app/components/Logo";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
+import { Footer } from "@/app/components/Footer";
 
 export default function Home() {
   const t = useTranslations("Page");
@@ -27,6 +27,7 @@ export default function Home() {
     qualityPriority: 50,
   });
   const [result, setResult] = useState<ProductRecommendation | null>(null);
+  const [searchId, setSearchId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -37,6 +38,7 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     setResult(null);
+    setSearchId(null);
 
     try {
       const res = await fetch("/api/recommend", {
@@ -48,6 +50,7 @@ export default function Home() {
 
       if (data.success && data.recommendation) {
         setResult(data.recommendation);
+        setSearchId(data.searchId || null);
       } else {
         setError(data.error || t("error"));
       }
@@ -63,40 +66,40 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center px-4 pb-[20vh]">
-      <ThemeToggle />
+    <div className="flex min-h-screen flex-col">
+      <main className="relative flex flex-1 flex-col items-center justify-center px-4 pb-16">
+        <ThemeToggle />
 
-      <NavMenu />
+        <NavMenu />
 
-      <p className="mb-2 text-center text-lg text-muted">
-        {t("title")}
-      </p>
+        <p className="mb-2 text-center text-lg text-muted">
+          {t("title")}
+        </p>
 
-      <SearchForm
-        query={query}
-        onQueryChange={setQuery}
-        onSubmit={handleSearch}
-        isLoading={isLoading}
-      />
+        <SearchForm
+          query={query}
+          onQueryChange={setQuery}
+          onSubmit={handleSearch}
+          isLoading={isLoading}
+        />
 
-      <SettingsPanel
-        preferences={preferences}
-        onPreferencesChange={setPreferences}
-        isOpen={settingsOpen}
-        onToggle={toggleSettings}
-      />
+        <SettingsPanel
+          preferences={preferences}
+          onPreferencesChange={setPreferences}
+          isOpen={settingsOpen}
+          onToggle={toggleSettings}
+        />
 
-      {isLoading && <LoadingAnimation />}
+        {isLoading && <LoadingAnimation />}
 
-      {result && !isLoading && <ProductCard recommendation={result} />}
+        {result && !isLoading && <ProductCard recommendation={result} searchId={searchId ?? undefined} />}
 
-      {error && !isLoading && (
-        <p className="mt-8 text-center text-muted">{error}</p>
-      )}
+        {error && !isLoading && (
+          <p className="mt-8 text-center text-muted">{error}</p>
+        )}
+      </main>
 
-      <div className="fixed right-6 bottom-6">
-        <Logo size="small" />
-      </div>
-    </main>
+      <Footer />
+    </div>
   );
 }
