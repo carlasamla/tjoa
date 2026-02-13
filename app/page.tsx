@@ -11,8 +11,10 @@ import { SearchForm } from "@/app/components/SearchForm";
 import { ProductCard } from "@/app/components/ProductCard";
 import { SettingsPanel } from "@/app/components/SettingsPanel";
 import { LoadingAnimation } from "@/app/components/LoadingAnimation";
-import { LocaleSwitch } from "@/app/components/LocaleSwitch";
+
 import { NavMenu } from "@/app/components/NavMenu";
+import { Logo } from "@/app/components/Logo";
+import { ThemeToggle } from "@/app/components/ThemeToggle";
 
 export default function Home() {
   const t = useTranslations("Page");
@@ -61,14 +63,14 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center px-4">
-      <LocaleSwitch />
+    <main className="relative flex min-h-screen flex-col items-center justify-center px-4 pb-[20vh]">
+      <ThemeToggle />
 
       <NavMenu />
 
-      <h1 className="mb-4 text-center text-2xl font-semibold tracking-tight">
+      <p className="mb-4 text-center text-lg text-muted">
         {t("title")}
-      </h1>
+      </p>
 
       <SearchForm
         query={query}
@@ -91,6 +93,10 @@ export default function Home() {
       {error && !isLoading && (
         <p className="mt-8 text-center text-muted">{error}</p>
       )}
+
+      <div className="fixed right-6 bottom-6">
+        <Logo size="small" />
+      </div>
     </main>
   );
 }
