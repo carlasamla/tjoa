@@ -14,7 +14,7 @@ export function NavMenu() {
   const t = useTranslations("Nav");
 
   return (
-    <nav className="mb-6 flex gap-1 rounded-lg border border-border p-1">
+    <nav className="mb-3 flex gap-1 rounded-lg border border-border p-1">
       {links.map(({ href, key }) => {
         const isActive = pathname === href;
         return (

@@ -68,7 +68,7 @@ export default function Home() {
 
       <NavMenu />
 
-      <p className="mb-4 text-center text-lg text-muted">
+      <p className="mb-2 text-center text-lg text-muted">
         {t("title")}
       </p>
 

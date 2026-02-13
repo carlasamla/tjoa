@@ -28,7 +28,7 @@ export function SearchForm({
         e.preventDefault();
         onSubmit();
       }}
-      className="flex w-full max-w-sm flex-col gap-2 sm:flex-row"
+      className="flex w-full max-w-md flex-col items-center gap-3"
     >
       <input
         type="text"
@@ -41,7 +41,7 @@ export function SearchForm({
       <button
         type="submit"
         disabled={isLoading || !query.trim()}
-        className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-40"
+        className="rounded-lg bg-foreground px-6 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-40"
       >
         {tb("button")}
       </button>
