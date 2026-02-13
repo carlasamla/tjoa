@@ -6,7 +6,7 @@ import type {
 } from "./analytics-types";
 
 function getSQL() {
-  return neon(process.env.POSTGRES_URL!);
+  return neon(process.env.DATABASE_URL!);
 }
 
 let tablesReady: Promise<void> | null = null;
