@@ -11,75 +11,63 @@ import type {
 const DATA_DIR = path.join(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "analytics.json");
 
-class AnalyticsStore {
-  private searches: Map<string, SearchEvent> = new Map();
-  private clicks: ClickEvent[] = [];
-  private engagements: EngagementEvent[] = [];
-  private dirty = false;
-
-  constructor() {
-    this.load();
-  }
-
-  private load() {
-    try {
-      if (fs.existsSync(DATA_FILE)) {
-        const raw = fs.readFileSync(DATA_FILE, "utf-8");
-        const data: AnalyticsData = JSON.parse(raw);
-        data.searches.forEach((s) => this.searches.set(s.id, s));
-        this.clicks = data.clicks || [];
-        this.engagements = data.engagements || [];
-      }
-    } catch {
-      // First run or corrupt file — start fresh
-    }
-  }
-
-  private persist() {
-    if (!this.dirty) return;
-    try {
-      if (!fs.existsSync(DATA_DIR)) {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
-      }
-      const data: AnalyticsData = {
-        searches: Array.from(this.searches.values()),
-        clicks: this.clicks,
-        engagements: this.engagements,
+function readFromDisk(): AnalyticsData {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, "utf-8");
+      const data = JSON.parse(raw);
+      return {
+        searches: data.searches || [],
+        clicks: data.clicks || [],
+        engagements: data.engagements || [],
       };
-      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-      this.dirty = false;
-    } catch (e) {
-      console.error("Analytics persist error:", e);
     }
+  } catch {
+    // First run or corrupt file — start fresh
   }
+  return { searches: [], clicks: [], engagements: [] };
+}
 
-  logSearch(event: SearchEvent): void {
-    this.searches.set(event.id, event);
-    this.dirty = true;
-    this.persist();
+function writeToDisk(data: AnalyticsData): void {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  } catch (e) {
+    console.error("Analytics persist error:", e);
   }
+}
+
+export const analytics = {
+  logSearch(event: SearchEvent): void {
+    const data = readFromDisk();
+    data.searches.push(event);
+    writeToDisk(data);
+  },
 
   logClick(searchId: string, link: string): void {
-    const search = this.searches.get(searchId);
+    const data = readFromDisk();
+    const search = data.searches.find((s) => s.id === searchId);
     if (search) {
       search.clicked = true;
     }
-    this.clicks.push({ searchId, timestamp: Date.now(), link });
-    this.dirty = true;
-    this.persist();
-  }
+    data.clicks.push({ searchId, timestamp: Date.now(), link });
+    writeToDisk(data);
+  },
 
   logEngagement(event: EngagementEvent): void {
-    this.engagements.push(event);
-    this.dirty = true;
-    this.persist();
-  }
+    const data = readFromDisk();
+    data.engagements.push(event);
+    writeToDisk(data);
+  },
 
   getDashboardData(): { rows: DashboardRow[]; engagements: EngagementEvent[] } {
-    const rows: DashboardRow[] = Array.from(this.searches.values())
+    const data = readFromDisk();
+    const rows: DashboardRow[] = data.searches
       .sort((a, b) => b.timestamp - a.timestamp)
       .map((s) => {
-        const click = this.clicks.find((c) => c.searchId === s.id);
+        const click = data.clicks.find((c) => c.searchId === s.id);
         return {
           id: s.id,
           type: s.type,
@@ -91,9 +79,6 @@ class AnalyticsStore {
         };
       });
 
-    return { rows, engagements: this.engagements };
-  }
-}
-
-// Singleton — survives across requests in the same server process
-export const analytics = new AnalyticsStore();
+    return { rows, engagements: data.engagements };
+  },
+};
