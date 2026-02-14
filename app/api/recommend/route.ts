@@ -140,19 +140,33 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Swedish retailers.`
     const MAX_ATTEMPTS = 3;
 
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-      const response = await anthropic.messages.create({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 512,
-        system: SYSTEM_PROMPT,
-        messages,
-        tools: [
-          {
-            type: "web_search_20250305",
-            name: "web_search",
-            max_uses: 5,
-          },
-        ],
-      });
+      console.log(`[recommend] Attempt ${attempt + 1}/${MAX_ATTEMPTS} for query: "${query.trim()}"`);
+
+      let response;
+      try {
+        response = await anthropic.messages.create({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 512,
+          system: SYSTEM_PROMPT,
+          messages,
+          tools: [
+            {
+              type: "web_search_20250305",
+              name: "web_search",
+              max_uses: 5,
+            },
+          ],
+        });
+      } catch (apiError) {
+        const apiMsg = apiError instanceof Error ? apiError.message : String(apiError);
+        console.error(`[recommend] Anthropic API error on attempt ${attempt + 1}:`, apiMsg);
+        if (apiError instanceof Error && "status" in apiError) {
+          console.error(`[recommend] API status: ${(apiError as { status: number }).status}`);
+        }
+        throw apiError;
+      }
+
+      console.log(`[recommend] API response stop_reason: ${response.stop_reason}, content blocks: ${response.content.length}`);
 
       const textBlocks = response.content.filter(
         (block): block is Anthropic.TextBlock => block.type === "text",
@@ -160,6 +174,7 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Swedish retailers.`
       const fullText = textBlocks.map((b) => b.text).join("");
 
       if (!fullText) {
+        console.warn(`[recommend] Attempt ${attempt + 1}: No text in response. Block types: ${response.content.map((b) => b.type).join(", ")}`);
         if (attempt === MAX_ATTEMPTS - 1) {
           return NextResponse.json(
             { success: false, error: err.noResult },
@@ -171,6 +186,7 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Swedish retailers.`
 
       const jsonMatch = fullText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
+        console.warn(`[recommend] Attempt ${attempt + 1}: No JSON found in response text: "${fullText.slice(0, 200)}"`);
         if (attempt === MAX_ATTEMPTS - 1) {
           return NextResponse.json(
             { success: false, error: err.parseFail },
@@ -180,10 +196,24 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Swedish retailers.`
         continue;
       }
 
-      parsed = JSON.parse(jsonMatch[0]);
+      try {
+        parsed = JSON.parse(jsonMatch[0]);
+      } catch (parseError) {
+        console.error(`[recommend] Attempt ${attempt + 1}: JSON parse failed:`, jsonMatch[0].slice(0, 200));
+        if (attempt === MAX_ATTEMPTS - 1) {
+          return NextResponse.json(
+            { success: false, error: err.parseFail },
+            { status: 500 },
+          );
+        }
+        continue;
+      }
+
+      console.log(`[recommend] Parsed product: "${parsed?.productName}" from "${parsed?.retailer}" link: "${parsed?.buyLink}"`);
 
       // Validate the buyLink is a specific product page, not a category
       if (parsed?.buyLink && !isProductPageUrl(parsed.buyLink)) {
+        console.warn(`[recommend] Attempt ${attempt + 1}: URL rejected as category page: "${parsed.buyLink}"`);
         if (attempt < MAX_ATTEMPTS - 1) {
           // Ask the model to fix the URL by finding the actual product page
           messages.push(
@@ -223,20 +253,27 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Swedish retailers.`
     };
 
     const searchId = crypto.randomUUID();
-    await analytics.logSearch({
-      id: searchId,
-      type: "product",
-      query: query.trim(),
-      timestamp: Date.now(),
-      resultName: recommendation.productName,
-      resultLink: recommendation.buyLink,
-      clicked: false,
-    });
+    try {
+      await analytics.logSearch({
+        id: searchId,
+        type: "product",
+        query: query.trim(),
+        timestamp: Date.now(),
+        resultName: recommendation.productName,
+        resultLink: recommendation.buyLink,
+        clicked: false,
+      });
+    } catch (dbError) {
+      console.error("[recommend] Analytics DB error:", dbError instanceof Error ? dbError.message : String(dbError));
+      // Don't fail the request if analytics logging fails
+    }
 
     return NextResponse.json({ success: true, recommendation, searchId });
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
     console.error("Recommend API error:", errMsg);
+    if (stack) console.error("Recommend API stack:", stack);
 
     const isRateLimit = errMsg.includes("rate_limit");
 
