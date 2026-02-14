@@ -97,13 +97,48 @@ const errorMessages = {
     emptyQuery: "Berätta vad du vill köpa.",
     noResult: "Kunde inte hitta en rekommendation.",
     parseFail: "Kunde inte tolka svaret.",
+    overloaded: "Tjänsten är tillfälligt överbelastad. Försök igen om en stund.",
   },
   en: {
     emptyQuery: "Please tell us what you want to buy.",
     noResult: "No recommendation could be generated.",
     parseFail: "Could not parse recommendation.",
+    overloaded: "Service is temporarily overloaded. Please try again shortly.",
   },
 } as const;
+
+/**
+ * Calls the Anthropic API with retry + exponential backoff for transient errors (429, 529).
+ * Retries up to `maxRetries` times with delays of 1s, 2s, 4s, ...
+ */
+async function callAnthropicWithRetry(
+  params: Parameters<typeof anthropic.messages.create>[0],
+  maxRetries = 3,
+): Promise<Anthropic.Message> {
+  for (let retry = 0; retry <= maxRetries; retry++) {
+    try {
+      return await anthropic.messages.create(params);
+    } catch (err) {
+      const status =
+        err instanceof Error && "status" in err
+          ? (err as { status: number }).status
+          : 0;
+      const isRetryable = status === 429 || status === 529;
+
+      if (!isRetryable || retry === maxRetries) {
+        throw err;
+      }
+
+      const delayMs = Math.min(1000 * 2 ** retry, 8000);
+      console.warn(
+        `[recommend] Retryable API error (status ${status}), retrying in ${delayMs}ms (${retry + 1}/${maxRetries})`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  // Should never reach here, but satisfy TS
+  throw new Error("Exhausted retries");
+}
 
 export async function POST(request: NextRequest) {
   let locale = "sv";
@@ -144,7 +179,7 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Swedish retailers.`
 
       let response;
       try {
-        response = await anthropic.messages.create({
+        response = await callAnthropicWithRetry({
           model: "claude-haiku-4-5-20251001",
           max_tokens: 512,
           system: SYSTEM_PROMPT,
@@ -275,19 +310,31 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Swedish retailers.`
     console.error("Recommend API error:", errMsg);
     if (stack) console.error("Recommend API stack:", stack);
 
-    const isRateLimit = errMsg.includes("rate_limit");
+    const apiStatus =
+      error instanceof Error && "status" in error
+        ? (error as { status: number }).status
+        : 0;
+    const isRateLimit = errMsg.includes("rate_limit") || apiStatus === 429;
+    const isOverloaded = errMsg.includes("overloaded") || apiStatus === 529;
 
-    const message = isRateLimit
-      ? locale === "sv"
-        ? "För många förfrågningar. Vänta en stund och försök igen."
-        : "Too many requests. Please wait a moment and try again."
-      : locale === "sv"
-        ? "Något gick fel. Försök igen."
-        : "Something went wrong. Please try again.";
+    const lang = locale === "sv" ? "sv" : "en";
+    const errMsgs = errorMessages[lang] || errorMessages.sv;
+
+    const message = isOverloaded
+      ? errMsgs.overloaded
+      : isRateLimit
+        ? locale === "sv"
+          ? "För många förfrågningar. Vänta en stund och försök igen."
+          : "Too many requests. Please wait a moment and try again."
+        : locale === "sv"
+          ? "Något gick fel. Försök igen."
+          : "Something went wrong. Please try again.";
+
+    const status = isOverloaded ? 503 : isRateLimit ? 429 : 500;
 
     return NextResponse.json(
       { success: false, error: message },
-      { status: isRateLimit ? 429 : 500 },
+      { status },
     );
   }
 }
