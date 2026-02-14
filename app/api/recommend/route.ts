@@ -20,6 +20,8 @@ Rules:
 - Prices in SEK
 - IMPORTANT: Recommend the actual product the user is asking for, NOT accessories or related items. For example if the user asks for "TV", recommend an actual television set, NOT a TV remote control, TV mount, or TV cable. If the user asks for "printer", recommend an actual printer, NOT ink cartridges or paper.
 - buyLink MUST be a URL to the SPECIFIC product page where the user can add it to cart and buy it. NEVER link to a category page, search results page, or listing page. The URL must contain a product ID or unique product slug. For example on Elgiganten a valid URL looks like "elgiganten.se/product/..../123456" with an article number — a category URL like "elgiganten.se/hem-hushall-tradgard/kaffemaskiner-te/espressomaskin" is WRONG. Always search for the specific product by name on the retailer's site and use that URL.
+- ONLY recommend products that are IN STOCK and available for purchase. NEVER recommend out-of-stock products. If a product page says "Slut i lager", "Slutsåld", "Ej i lager", "Tillfälligt slut", "Out of stock", or similar — skip it and find another product that IS in stock.
+- The price field MUST be a numeric price in SEK (e.g. "1 299 kr"). NEVER use "Kontakta butik", "Pris saknas", "N/A", or any non-numeric price. If no price is listed, the product is not available — find another one.
 - You MUST ALWAYS return a product recommendation. NEVER return an error. If you can't find the exact product, recommend the closest alternative you can find on a Swedish retailer. There is always something to recommend.`;
 
 /**
@@ -90,6 +92,16 @@ function isProductPageUrl(url: string): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * Checks if the price string contains an actual numeric price.
+ * Rejects "Kontakta butik", "N/A", "Pris saknas", etc.
+ */
+function hasValidPrice(price: string): boolean {
+  if (!price) return false;
+  // Must contain at least one digit to be a real price
+  return /\d/.test(price);
 }
 
 const errorMessages = {
@@ -250,7 +262,6 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Swedish retailers.`
       if (parsed?.buyLink && !isProductPageUrl(parsed.buyLink)) {
         console.warn(`[recommend] Attempt ${attempt + 1}: URL rejected as category page: "${parsed.buyLink}"`);
         if (attempt < MAX_ATTEMPTS - 1) {
-          // Ask the model to fix the URL by finding the actual product page
           messages.push(
             { role: "assistant", content: fullText },
             {
@@ -260,7 +271,22 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Swedish retailers.`
           );
           continue;
         }
-        // On last attempt, accept whatever we got
+      }
+
+      // Validate price is a real numeric price, not "Kontakta butik" etc.
+      if (parsed?.price && !hasValidPrice(parsed.price)) {
+        console.warn(`[recommend] Attempt ${attempt + 1}: Invalid price "${parsed.price}" — product may be out of stock`);
+        if (attempt < MAX_ATTEMPTS - 1) {
+          messages.push(
+            { role: "assistant", content: fullText },
+            {
+              role: "user",
+              content: `WRONG: The price "${parsed.price}" is not a valid price — the product is likely out of stock or unavailable. Find a DIFFERENT product that is actually IN STOCK with a real numeric price in SEK (e.g. "1 299 kr"). Search again and return a new recommendation.`,
+            },
+          );
+          parsed = null;
+          continue;
+        }
       }
 
       break;
