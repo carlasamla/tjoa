@@ -9,7 +9,7 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="w-full border-t border-border mt-auto py-4 px-4">
+    <footer className="w-full border-t border-border mt-auto py-4 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto max-w-2xl flex flex-col items-center gap-2 text-xs text-muted">
         <Logo size="small" />
 

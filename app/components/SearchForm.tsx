@@ -35,13 +35,13 @@ export function SearchForm({
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
         placeholder={tp("placeholder")}
-        className="w-full rounded-lg border border-border px-3 py-2 text-center text-base placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-foreground/20"
+        className="w-full rounded-lg border border-border px-3 py-3 text-center text-base placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-foreground/20 sm:py-2"
         disabled={isLoading}
       />
       <button
         type="submit"
         disabled={isLoading || !query.trim()}
-        className="rounded-lg bg-white px-6 py-2 text-sm font-semibold text-black transition-colors hover:bg-white/90 dark:bg-white dark:text-black dark:hover:bg-white/90 disabled:opacity-40"
+        className="rounded-lg bg-white px-8 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-white/90 active:bg-white/80 dark:bg-white dark:text-black dark:hover:bg-white/90 disabled:opacity-40 sm:px-6 sm:py-2"
       >
         {tb("button")}
       </button>

@@ -63,7 +63,7 @@ export function StockCard({ recommendation, searchId }: StockCardProps) {
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleBuyClick}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/90 active:bg-foreground/80 sm:px-4 sm:py-2"
         >
           {t("buyOn")}
           <svg

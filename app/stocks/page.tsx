@@ -63,38 +63,40 @@ export default function StocksPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <main className="relative flex flex-1 flex-col items-center justify-center px-4 pb-16">
+      <main className="relative flex flex-1 flex-col items-center px-4">
         <ThemeToggle />
 
-        <NavMenu />
+        <div className="my-auto flex w-full flex-col items-center py-14 sm:py-8">
+          <NavMenu />
 
-        <p className="mb-2 text-center text-lg text-muted">
-          {t("title")}
-        </p>
+          <p className="mb-2 text-center text-base text-muted sm:text-lg">
+            {t("title")}
+          </p>
 
-        <SearchForm
-          query={query}
-          onQueryChange={setQuery}
-          onSubmit={handleSearch}
-          isLoading={isLoading}
-          placeholderKey="StocksSearch"
-          buttonKey="StocksSearch"
-        />
+          <SearchForm
+            query={query}
+            onQueryChange={setQuery}
+            onSubmit={handleSearch}
+            isLoading={isLoading}
+            placeholderKey="StocksSearch"
+            buttonKey="StocksSearch"
+          />
 
-        <StockSettingsPanel
-          preferences={preferences}
-          onPreferencesChange={setPreferences}
-          isOpen={settingsOpen}
-          onToggle={toggleSettings}
-        />
+          <StockSettingsPanel
+            preferences={preferences}
+            onPreferencesChange={setPreferences}
+            isOpen={settingsOpen}
+            onToggle={toggleSettings}
+          />
 
-        {isLoading && <LoadingAnimation loadingKey="StockLoading" />}
+          {isLoading && <LoadingAnimation loadingKey="StockLoading" />}
 
-        {result && !isLoading && <StockCard recommendation={result} searchId={searchId ?? undefined} />}
+          {result && !isLoading && <StockCard recommendation={result} searchId={searchId ?? undefined} />}
 
-        {error && !isLoading && (
-          <p className="mt-8 text-center text-muted">{error}</p>
-        )}
+          {error && !isLoading && (
+            <p className="mt-8 text-center text-muted">{error}</p>
+          )}
+        </div>
       </main>
 
       <Footer />

@@ -18,11 +18,11 @@ export function LocaleSwitch() {
 
   return (
     <div
-      className={`fixed left-4 top-4 z-10 flex gap-1 text-sm ${isPending ? "opacity-50" : ""}`}
+      className={`fixed left-3 top-3 z-10 flex gap-0.5 text-sm sm:left-4 sm:top-4 ${isPending ? "opacity-50" : ""}`}
     >
       <button
         onClick={() => switchLocale("sv")}
-        className={`rounded px-2 py-1 transition-colors ${
+        className={`flex h-10 items-center rounded-full px-2.5 transition-colors active:bg-foreground/10 ${
           locale === "sv"
             ? "font-semibold text-foreground"
             : "text-muted hover:text-foreground"
@@ -30,10 +30,10 @@ export function LocaleSwitch() {
       >
         SV
       </button>
-      <span className="py-1 text-border">/</span>
+      <span className="flex items-center text-border">/</span>
       <button
         onClick={() => switchLocale("en")}
-        className={`rounded px-2 py-1 transition-colors ${
+        className={`flex h-10 items-center rounded-full px-2.5 transition-colors active:bg-foreground/10 ${
           locale === "en"
             ? "font-semibold text-foreground"
             : "text-muted hover:text-foreground"

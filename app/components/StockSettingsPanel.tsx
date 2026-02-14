@@ -36,7 +36,7 @@ export function StockSettingsPanel({
     <div className="mt-4 w-full max-w-md">
       <button
         onClick={onToggle}
-        className="mx-auto flex items-center text-muted transition-colors hover:text-foreground"
+        className="mx-auto flex h-10 w-10 items-center justify-center rounded-full text-muted transition-colors hover:text-foreground active:bg-foreground/10"
         aria-label={t("title")}
       >
         <svg
@@ -136,7 +136,7 @@ export function StockSettingsPanel({
                       maxPrice: Math.max(0, Number(e.target.value)),
                     })
                   }
-                  className="w-full rounded-lg border border-border px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20"
+                  className="w-full rounded-lg border border-border px-3 py-2.5 text-base focus:outline-none focus:ring-1 focus:ring-foreground/20 sm:px-2 sm:py-1.5 sm:text-sm"
                   min={0}
                   placeholder="5000"
                 />

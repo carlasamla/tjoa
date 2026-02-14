@@ -50,7 +50,7 @@ export default function DashboardPage() {
       : 0;
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-12">
+    <main className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
       <h1 className="mb-8 text-xl font-semibold">Dashboard</h1>
 
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">

@@ -61,7 +61,7 @@ export function SettingsPanel({
     <div className="mt-4 w-full max-w-md">
       <button
         onClick={onToggle}
-        className="mx-auto flex items-center text-muted transition-colors hover:text-foreground"
+        className="mx-auto flex h-10 w-10 items-center justify-center rounded-full text-muted transition-colors hover:text-foreground active:bg-foreground/10"
         aria-label={t("title")}
       >
         <svg

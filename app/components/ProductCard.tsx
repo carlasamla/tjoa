@@ -36,7 +36,7 @@ export function ProductCard({ recommendation, searchId }: ProductCardProps) {
           <img
             src={recommendation.imageUrl}
             alt={recommendation.productName}
-            className="h-36 w-full object-contain"
+            className="h-40 w-full object-contain sm:h-36"
             onError={() => setImageError(true)}
           />
         </div>
@@ -60,7 +60,7 @@ export function ProductCard({ recommendation, searchId }: ProductCardProps) {
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleBuyClick}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/90 active:bg-foreground/80 sm:px-4 sm:py-2"
         >
         {t("buyOn", { retailer: recommendation.retailer })}
         <svg

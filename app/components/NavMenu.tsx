@@ -21,7 +21,7 @@ export function NavMenu() {
           <Link
             key={href}
             href={href}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors sm:px-3 sm:py-1.5 sm:text-xs ${
               isActive
                 ? "bg-foreground text-background"
                 : "text-muted hover:text-foreground"
