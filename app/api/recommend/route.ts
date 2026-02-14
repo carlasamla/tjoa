@@ -112,7 +112,7 @@ const errorMessages = {
  * Retries up to `maxRetries` times with delays of 1s, 2s, 4s, ...
  */
 async function callAnthropicWithRetry(
-  params: Parameters<typeof anthropic.messages.create>[0],
+  params: Anthropic.MessageCreateParamsNonStreaming,
   maxRetries = 3,
 ): Promise<Anthropic.Message> {
   for (let retry = 0; retry <= maxRetries; retry++) {
