@@ -3,9 +3,26 @@
 import { useTranslations } from "next-intl";
 import type { UserPreferences } from "@/app/lib/types";
 
-const PRICE_MIN = 0;
-const PRICE_MAX = 20000;
-const PRICE_STEP = 500;
+// Non-linear price stops: small steps at low end, bigger steps toward 1M
+const PRICE_STOPS = [
+  0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000,
+  6000, 7000, 8000, 9000, 10000,
+  12000, 15000, 20000, 25000, 30000,
+  40000, 50000, 75000, 100000,
+  150000, 200000, 300000, 500000, 750000, 1000000,
+];
+const SLIDER_MAX = PRICE_STOPS.length - 1;
+
+function priceToSlider(price: number): number {
+  for (let i = PRICE_STOPS.length - 1; i >= 0; i--) {
+    if (price >= PRICE_STOPS[i]) return i;
+  }
+  return 0;
+}
+
+function sliderToPrice(index: number): number {
+  return PRICE_STOPS[Math.min(Math.max(0, Math.round(index)), SLIDER_MAX)];
+}
 
 interface SettingsPanelProps {
   preferences: UserPreferences;
@@ -15,9 +32,9 @@ interface SettingsPanelProps {
 }
 
 function formatPrice(value: number): string {
-  return value >= 1000
-    ? `${Math.round(value / 1000)}k`
-    : String(value);
+  if (value >= 1000000) return `${value / 1000000}M`;
+  if (value >= 1000) return `${Math.round(value / 1000)}k`;
+  return String(value);
 }
 
 export function SettingsPanel({
@@ -35,8 +52,10 @@ export function SettingsPanel({
         ? t("balanced")
         : t("bestQuality");
 
-  const minPercent = ((preferences.minPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
-  const maxPercent = ((preferences.maxPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
+  const minSlider = priceToSlider(preferences.minPrice);
+  const maxSlider = priceToSlider(preferences.maxPrice);
+  const minPercent = (minSlider / SLIDER_MAX) * 100;
+  const maxPercent = (maxSlider / SLIDER_MAX) * 100;
 
   return (
     <div className="mt-4 w-full max-w-md">
@@ -94,15 +113,16 @@ export function SettingsPanel({
                 {/* Min thumb */}
                 <input
                   type="range"
-                  min={PRICE_MIN}
-                  max={PRICE_MAX}
-                  step={PRICE_STEP}
-                  value={preferences.minPrice}
+                  min={0}
+                  max={SLIDER_MAX}
+                  step={1}
+                  value={minSlider}
                   onChange={(e) => {
-                    const val = Number(e.target.value);
+                    const idx = Number(e.target.value);
+                    const price = sliderToPrice(idx);
                     onPreferencesChange({
                       ...preferences,
-                      minPrice: Math.min(val, preferences.maxPrice - PRICE_STEP),
+                      minPrice: Math.min(price, preferences.maxPrice),
                     });
                   }}
                   className="dual-range-thumb pointer-events-none absolute top-0 h-full w-full appearance-none bg-transparent"
@@ -110,23 +130,24 @@ export function SettingsPanel({
                 {/* Max thumb */}
                 <input
                   type="range"
-                  min={PRICE_MIN}
-                  max={PRICE_MAX}
-                  step={PRICE_STEP}
-                  value={preferences.maxPrice}
+                  min={0}
+                  max={SLIDER_MAX}
+                  step={1}
+                  value={maxSlider}
                   onChange={(e) => {
-                    const val = Number(e.target.value);
+                    const idx = Number(e.target.value);
+                    const price = sliderToPrice(idx);
                     onPreferencesChange({
                       ...preferences,
-                      maxPrice: Math.max(val, preferences.minPrice + PRICE_STEP),
+                      maxPrice: Math.max(price, preferences.minPrice),
                     });
                   }}
                   className="dual-range-thumb pointer-events-none absolute top-0 h-full w-full appearance-none bg-transparent"
                 />
               </div>
               <div className="flex justify-between text-xs text-muted">
-                <span>{formatPrice(PRICE_MIN)} kr</span>
-                <span>{formatPrice(PRICE_MAX)} kr</span>
+                <span>0 kr</span>
+                <span>1M kr</span>
               </div>
             </div>
 
