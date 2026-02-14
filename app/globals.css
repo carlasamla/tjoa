@@ -57,3 +57,28 @@ body {
 input[type="range"] {
   accent-color: var(--foreground);
 }
+
+/* Dual range slider thumb styles */
+.dual-range-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--foreground);
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+.dual-range-thumb::-moz-range-thumb {
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--foreground);
+  border: none;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}

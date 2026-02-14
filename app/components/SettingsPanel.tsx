@@ -3,11 +3,21 @@
 import { useTranslations } from "next-intl";
 import type { UserPreferences } from "@/app/lib/types";
 
+const PRICE_MIN = 0;
+const PRICE_MAX = 20000;
+const PRICE_STEP = 500;
+
 interface SettingsPanelProps {
   preferences: UserPreferences;
   onPreferencesChange: (prefs: UserPreferences) => void;
   isOpen: boolean;
   onToggle: () => void;
+}
+
+function formatPrice(value: number): string {
+  return value >= 1000
+    ? `${Math.round(value / 1000)}k`
+    : String(value);
 }
 
 export function SettingsPanel({
@@ -24,6 +34,9 @@ export function SettingsPanel({
       : preferences.qualityPriority <= 75
         ? t("balanced")
         : t("bestQuality");
+
+  const minPercent = ((preferences.minPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
+  const maxPercent = ((preferences.maxPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
 
   return (
     <div className="mt-4 w-full max-w-md">
@@ -62,37 +75,58 @@ export function SettingsPanel({
           <div className="pt-2 pb-1">
             <div className="mb-3">
               <label className="mb-2 block text-xs text-muted">
-                {t("priceRange")}
+                {t("priceRange")}{" "}
+                <span className="font-medium text-foreground">
+                  {formatPrice(preferences.minPrice)} – {formatPrice(preferences.maxPrice)} kr
+                </span>
               </label>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted">kr</span>
+              <div className="relative h-6">
+                {/* Track background */}
+                <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 rounded-full bg-foreground/20" />
+                {/* Active range highlight */}
+                <div
+                  className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-foreground"
+                  style={{
+                    left: `${minPercent}%`,
+                    width: `${maxPercent - minPercent}%`,
+                  }}
+                />
+                {/* Min thumb */}
                 <input
-                  type="number"
+                  type="range"
+                  min={PRICE_MIN}
+                  max={PRICE_MAX}
+                  step={PRICE_STEP}
                   value={preferences.minPrice}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
                     onPreferencesChange({
                       ...preferences,
-                      minPrice: Math.max(0, Number(e.target.value)),
-                    })
-                  }
-                  className="w-full rounded-lg border border-border px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20"
-                  min={0}
-                  placeholder="0"
+                      minPrice: Math.min(val, preferences.maxPrice - PRICE_STEP),
+                    });
+                  }}
+                  className="dual-range-thumb pointer-events-none absolute top-0 h-full w-full appearance-none bg-transparent"
                 />
-                <span className="text-xs text-muted">–</span>
+                {/* Max thumb */}
                 <input
-                  type="number"
+                  type="range"
+                  min={PRICE_MIN}
+                  max={PRICE_MAX}
+                  step={PRICE_STEP}
                   value={preferences.maxPrice}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
                     onPreferencesChange({
                       ...preferences,
-                      maxPrice: Math.max(0, Number(e.target.value)),
-                    })
-                  }
-                  className="w-full rounded-lg border border-border px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20"
-                  min={0}
-                  placeholder="5000"
+                      maxPrice: Math.max(val, preferences.minPrice + PRICE_STEP),
+                    });
+                  }}
+                  className="dual-range-thumb pointer-events-none absolute top-0 h-full w-full appearance-none bg-transparent"
                 />
+              </div>
+              <div className="flex justify-between text-xs text-muted">
+                <span>{formatPrice(PRICE_MIN)} kr</span>
+                <span>{formatPrice(PRICE_MAX)} kr</span>
               </div>
             </div>
 

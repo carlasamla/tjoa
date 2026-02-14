@@ -18,6 +18,7 @@ Rules:
 - Search Swedish retailers: Elgiganten, NetOnNet, Webhallen, Kjell, CDON, Dustin, Komplett, MediaMarkt, IKEA
 - NEVER use Amazon or non-Swedish sites
 - Prices in SEK
+- IMPORTANT: Recommend the actual product the user is asking for, NOT accessories or related items. For example if the user asks for "TV", recommend an actual television set, NOT a TV remote control, TV mount, or TV cable. If the user asks for "printer", recommend an actual printer, NOT ink cartridges or paper.
 - buyLink MUST be a URL to the SPECIFIC product page where the user can add it to cart and buy it. NEVER link to a category page, search results page, or listing page. The URL must contain a product ID or unique product slug. For example on Elgiganten a valid URL looks like "elgiganten.se/product/..../123456" with an article number — a category URL like "elgiganten.se/hem-hushall-tradgard/kaffemaskiner-te/espressomaskin" is WRONG. Always search for the specific product by name on the retailer's site and use that URL.
 - You MUST ALWAYS return a product recommendation. NEVER return an error. If you can't find the exact product, recommend the closest alternative you can find on a Swedish retailer. There is always something to recommend.`;
 

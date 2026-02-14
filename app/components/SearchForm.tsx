@@ -41,7 +41,7 @@ export function SearchForm({
       <button
         type="submit"
         disabled={isLoading || !query.trim()}
-        className="rounded-lg bg-foreground px-6 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-40"
+        className="rounded-lg bg-white px-6 py-2 text-sm font-semibold text-black transition-colors hover:bg-white/90 dark:bg-white dark:text-black dark:hover:bg-white/90 disabled:opacity-40"
       >
         {tb("button")}
       </button>
