@@ -70,7 +70,12 @@ export default function Home() {
     [query, preferences, locale, t],
   );
 
-  const handleSearch = useCallback(async () => {
+  const handleSearch = useCallback(() => {
+    if (!query.trim()) return;
+    doSearch();
+  }, [query, doSearch]);
+
+  const handleGuide = useCallback(async () => {
     if (!query.trim()) return;
 
     setPhase("guide-loading");
@@ -132,6 +137,7 @@ export default function Home() {
           query={query}
           onQueryChange={setQuery}
           onSubmit={handleSearch}
+          onGuide={handleGuide}
           isLoading={isLoading}
         />
 
