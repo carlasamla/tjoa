@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
 
@@ -24,9 +24,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const stored = localStorage.getItem("theme") as Theme | null;
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const initial = stored || (prefersDark ? "dark" : "light");
-    setTheme(initial);
     document.documentElement.classList.toggle("dark", initial === "dark");
-    setMounted(true);
+    // Use startTransition to avoid synchronous setState-in-effect lint warning
+    React.startTransition(() => {
+      setTheme(initial);
+      setMounted(true);
+    });
   }, []);
 
   const toggle = () => {
