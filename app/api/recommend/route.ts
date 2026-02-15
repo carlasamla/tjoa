@@ -4,10 +4,20 @@ import crypto from "crypto";
 import type { ProductRecommendation } from "@/app/lib/types";
 import { toAffiliateLink } from "@/app/lib/affiliate-links";
 import { analytics } from "@/app/lib/analytics";
+import { ResponseCache, RateLimiter, buildCacheKey } from "@/app/lib/api-cache";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+// Cache identical product queries for 5 minutes to avoid duplicate API calls
+const recommendCache = new ResponseCache<{ recommendation: ProductRecommendation; searchId: string }>({
+  maxSize: 50,
+  ttlSeconds: 300,
+});
+
+// Allow max 5 requests per minute per IP
+const rateLimiter = new RateLimiter({ maxRequests: 5, windowSeconds: 60 });
 
 const SYSTEM_PROMPT = `You are an expert product advisor for Swedish consumers. Your job is to find the ONE best product for the user and explain why it's the right choice. You combine web search, review analysis, and product knowledge to make a genuinely helpful recommendation.
 
@@ -173,7 +183,7 @@ const errorMessages = {
  */
 async function callAnthropicWithRetry(
   params: Anthropic.MessageCreateParamsNonStreaming,
-  maxRetries = 3,
+  maxRetries = 2,
 ): Promise<Anthropic.Message> {
   for (let retry = 0; retry <= maxRetries; retry++) {
     try {
@@ -203,6 +213,18 @@ async function callAnthropicWithRetry(
 export async function POST(request: NextRequest) {
   let locale = "sv";
   try {
+    // Rate limit by IP
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (!rateLimiter.allow(ip)) {
+      const msg = locale === "sv"
+        ? "För många förfrågningar. Vänta en stund och försök igen."
+        : "Too many requests. Please wait a moment and try again.";
+      return NextResponse.json(
+        { success: false, error: msg },
+        { status: 429 },
+      );
+    }
+
     const body = await request.json();
     locale = body.locale || "sv";
     const { query, preferences, guideAnswers } = body;
@@ -214,6 +236,20 @@ export async function POST(request: NextRequest) {
         { success: false, error: err.emptyQuery },
         { status: 400 },
       );
+    }
+
+    // Check cache first — return cached result for identical queries
+    const cacheKey = buildCacheKey(
+      query,
+      String(preferences.minPrice),
+      String(preferences.maxPrice),
+      String(preferences.qualityPriority),
+      JSON.stringify(guideAnswers || []),
+    );
+    const cached = recommendCache.get(cacheKey);
+    if (cached) {
+      console.log(`[recommend] Cache hit for query: "${query.trim()}"`);
+      return NextResponse.json({ success: true, ...cached });
     }
 
     const prio =
@@ -248,7 +284,7 @@ Search Swedish retailers, find a specific product that matches, verify the produ
     ];
 
     let parsed: Record<string, string> | null = null;
-    const MAX_ATTEMPTS = 3;
+    const MAX_ATTEMPTS = 2;
 
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       console.log(`[recommend] Attempt ${attempt + 1}/${MAX_ATTEMPTS} for query: "${query.trim()}"`);
@@ -264,7 +300,7 @@ Search Swedish retailers, find a specific product that matches, verify the produ
             {
               type: "web_search_20250305",
               name: "web_search",
-              max_uses: 10,
+              max_uses: 5,
             },
           ],
         });
@@ -456,6 +492,9 @@ Search Swedish retailers, find a specific product that matches, verify the produ
       console.error("[recommend] Analytics DB error:", dbError instanceof Error ? dbError.message : String(dbError));
       // Don't fail the request if analytics logging fails
     }
+
+    // Cache the result for future identical queries
+    recommendCache.set(cacheKey, { recommendation, searchId });
 
     return NextResponse.json({ success: true, recommendation, searchId });
   } catch (error) {
