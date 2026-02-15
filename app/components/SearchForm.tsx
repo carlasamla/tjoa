@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Input } from "@base-ui/react/input";
 
 interface SearchFormProps {
   query: string;
@@ -30,12 +31,12 @@ export function SearchForm({
       }}
       className="flex w-full max-w-md flex-col items-center gap-3"
     >
-      <input
+      <Input
         type="text"
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
         placeholder={tp("placeholder")}
-        className="w-full rounded-lg border border-border px-3 py-2 text-center text-base placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-foreground/20"
+        className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-center text-base placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-foreground/20 disabled:opacity-40"
         disabled={isLoading}
       />
       <button

@@ -50,3 +50,21 @@ export interface StockResponse {
   searchId?: string;
   error?: string;
 }
+
+export interface GuideQuestion {
+  id: string;
+  question: string;
+  options: string[];
+}
+
+export interface GuideResponse {
+  success: boolean;
+  questions?: GuideQuestion[];
+  error?: string;
+}
+
+export interface GuideAnswer {
+  questionId: string;
+  question: string;
+  answer: string;
+}

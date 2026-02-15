@@ -6,12 +6,14 @@ import { useTranslations } from "next-intl";
 
 const links = [
   { href: "/", key: "things" },
-  { href: "/stocks", key: "stocks" },
+  // { href: "/stocks", key: "stocks" },
 ] as const;
 
 export function NavMenu() {
   const pathname = usePathname();
   const t = useTranslations("Nav");
+
+  if (links.length <= 1) return null;
 
   return (
     <nav className="mb-3 flex gap-1 rounded-lg border border-border p-1">
