@@ -80,7 +80,7 @@ Always return a recommendation. If no exact match, find the closest and explain 
 
 ## RESPONSE FORMAT
 Return ONLY a JSON object, no other text:
-{"productName":"Full product name with key specs","price":"XX XXX kr","reason":"2-3 nicely written sentences in the requested language explaining why you chose this product. Cover its main strengths, how it compares in value, and any relevant review highlights or brand reputation notes. Be specific and personal — write as if you are a knowledgeable friend explaining your pick.","summary":"","buyLink":"https://retailer.se/product/exact-product-page-url","imageUrl":"URL or null","retailer":"Retailer name"}`;
+{"productName":"Full product name with key specs","price":"XX XXX kr","reason":"1-2 short casual sentences in the requested language. Say why this is a good pick for the user — like a friend giving quick advice. Skip technical specs and marketing fluff. NEVER include <cite> tags or any citation markup.","summary":"","buyLink":"https://retailer.se/product/exact-product-page-url","imageUrl":"URL or null","retailer":"Retailer name"}`;
 
 /**
  * Checks if a URL looks like a specific product page rather than a category/listing page.
