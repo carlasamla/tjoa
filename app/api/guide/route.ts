@@ -8,16 +8,21 @@ const anthropic = new Anthropic({
 
 const SYSTEM_PROMPT = `You generate short, helpful follow-up questions to help a user find the right product.
 
-Given a product search query, return 2–4 questions that would help narrow down the best match. Each question should have 3–4 short answer options.
+Given a product search query, return 3–5 questions that would help narrow down the best match. Each question should have 3–4 short answer options.
 
 Rules:
 - Questions must be directly relevant to the specific product type in the query.
 - Keep questions short (one line).
-- Keep options short (1–4 words each).
-- Don't ask about price or budget (that's handled separately).
+- Keep options short (1–5 words each).
 - Don't repeat information already in the query.
 - If the query already specifies a detail (e.g. "32GB RAM laptop"), don't ask about that detail.
 - Focus on the most important differentiating factors for that product category.
+- ALWAYS include a budget question as the SECOND TO LAST question. Use price ranges calibrated to the product category. Examples:
+  - Headphones: "Under 500 kr", "500–1 500 kr", "1 500–3 000 kr", "Över 3 000 kr"
+  - Laptops: "Under 8 000 kr", "8 000–15 000 kr", "15 000–25 000 kr", "Över 25 000 kr"
+  - TVs: "Under 5 000 kr", "5 000–10 000 kr", "10 000–20 000 kr", "Över 20 000 kr"
+  Adapt the ranges to what makes sense for the specific product type.
+- ALWAYS include a priority question as the LAST question, asking what matters most. Use options like: "Lägsta pris" / "Lowest price", "Bäst värde för pengarna" / "Best value", "Premiumkvalitet" / "Premium quality".
 - Write questions and options in the same language as the user's query. If the query is in Swedish, write in Swedish. If in English, write in English.
 
 Return ONLY a JSON array, no other text:
@@ -95,7 +100,7 @@ Generate follow-up questions to help find the perfect product.`;
           Array.isArray(q.options) &&
           q.options.length >= 2,
       )
-      .slice(0, 4);
+      .slice(0, 5);
 
     if (questions.length === 0) {
       return NextResponse.json(

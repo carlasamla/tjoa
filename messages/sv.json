@@ -10,8 +10,8 @@
   },
   "Search": {
     "placeholder": "skrivare, löparskor, kaffemaskin...",
-    "button": "Visa",
-    "guideButton": "Guida mig"
+    "button": "Välj åt mig",
+    "guideButton": "Hjälp mig välja"
   },
   "Product": {
     "buyOn": "Köp på {retailer}",

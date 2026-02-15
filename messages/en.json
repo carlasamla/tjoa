@@ -10,8 +10,8 @@
   },
   "Search": {
     "placeholder": "printer, running shoes, coffee maker...",
-    "button": "Show me",
-    "guideButton": "Guide me"
+    "button": "Pick one for me",
+    "guideButton": "Help me choose"
   },
   "Product": {
     "buyOn": "Buy on {retailer}",

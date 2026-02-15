@@ -12,7 +12,6 @@ import type {
 } from "@/app/lib/types";
 import { SearchForm } from "@/app/components/SearchForm";
 import { ProductCard } from "@/app/components/ProductCard";
-import { SettingsPanel } from "@/app/components/SettingsPanel";
 import { LoadingAnimation } from "@/app/components/LoadingAnimation";
 import { GuideQuestions } from "@/app/components/GuideQuestions";
 
@@ -22,21 +21,69 @@ import { Footer } from "@/app/components/Footer";
 
 type Phase = "idle" | "guide-loading" | "guide" | "searching";
 
+/** Wide-open defaults — the AI picks the best value on its own. */
+const DEFAULT_PREFERENCES: UserPreferences = {
+  minPrice: 0,
+  maxPrice: 1000000,
+  qualityPriority: 50,
+};
+
+/**
+ * Try to extract budget/quality preferences from guide answers.
+ * Looks for price-related answers (containing "kr" or digits) and
+ * quality-priority answers to build a more specific preference object.
+ */
+function preferencesFromGuide(answers: GuideAnswer[]): UserPreferences {
+  let minPrice = 0;
+  let maxPrice = 1000000;
+  let qualityPriority = 50;
+
+  for (const a of answers) {
+    const val = a.answer;
+
+    // Detect budget answers like "5 000–10 000 kr", "Under 500 kr", "Över 25 000 kr"
+    const rangeMatch = val.match(/(\d[\d\s]*)\s*[–\-]\s*(\d[\d\s]*)\s*kr/i);
+    if (rangeMatch) {
+      minPrice = parseInt(rangeMatch[1].replace(/\s/g, ""), 10);
+      maxPrice = parseInt(rangeMatch[2].replace(/\s/g, ""), 10);
+      continue;
+    }
+    const underMatch = val.match(/under\s+(\d[\d\s]*)\s*kr/i);
+    if (underMatch) {
+      minPrice = 0;
+      maxPrice = parseInt(underMatch[1].replace(/\s/g, ""), 10);
+      continue;
+    }
+    const overMatch = val.match(/(över|over)\s+(\d[\d\s]*)\s*kr/i);
+    if (overMatch) {
+      minPrice = parseInt(overMatch[2].replace(/\s/g, ""), 10);
+      maxPrice = 1000000;
+      continue;
+    }
+
+    // Detect quality/priority answers
+    const lower = val.toLowerCase();
+    if (lower.includes("lägsta pris") || lower.includes("lowest price") || lower.includes("billigast")) {
+      qualityPriority = 10;
+    } else if (lower.includes("bäst värde") || lower.includes("best value") || lower.includes("balans")) {
+      qualityPriority = 50;
+    } else if (lower.includes("premium") || lower.includes("bäst kvalitet") || lower.includes("best quality")) {
+      qualityPriority = 90;
+    }
+  }
+
+  return { minPrice, maxPrice, qualityPriority };
+}
+
 export default function Home() {
   const t = useTranslations("Page");
   const locale = useLocale();
 
   const [query, setQuery] = useState("");
-  const [preferences, setPreferences] = useState<UserPreferences>({
-    minPrice: 0,
-    maxPrice: 20000,
-    qualityPriority: 50,
-  });
   const [result, setResult] = useState<ProductRecommendation | null>(null);
   const [searchId, setSearchId] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [guideQuestions, setGuideQuestions] = useState<GuideQuestion[] | null>(null);
 
   const doSearch = useCallback(
@@ -46,6 +93,10 @@ export default function Home() {
       setResult(null);
       setSearchId(null);
       setGuideQuestions(null);
+
+      const preferences = guideAnswers
+        ? preferencesFromGuide(guideAnswers)
+        : DEFAULT_PREFERENCES;
 
       try {
         const res = await fetch("/api/recommend", {
@@ -67,7 +118,7 @@ export default function Home() {
         setPhase("idle");
       }
     },
-    [query, preferences, locale, t],
+    [query, locale, t],
   );
 
   const handleSearch = useCallback(() => {
@@ -116,10 +167,6 @@ export default function Home() {
     doSearch();
   }, [doSearch]);
 
-  const toggleSettings = useCallback(() => {
-    setSettingsOpen((prev) => !prev);
-  }, []);
-
   const isLoading = phase === "guide-loading" || phase === "searching";
 
   return (
@@ -139,13 +186,6 @@ export default function Home() {
           onSubmit={handleSearch}
           onGuide={handleGuide}
           isLoading={isLoading}
-        />
-
-        <SettingsPanel
-          preferences={preferences}
-          onPreferencesChange={setPreferences}
-          isOpen={settingsOpen}
-          onToggle={toggleSettings}
         />
 
         {phase === "guide-loading" && (
