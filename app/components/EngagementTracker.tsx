@@ -5,14 +5,16 @@ import { usePathname } from "next/navigation";
 
 export function EngagementTracker() {
   const pathname = usePathname();
-  const startTime = useRef(Date.now());
-  const sessionId = useRef(
-    typeof crypto !== "undefined"
-      ? crypto.randomUUID()
-      : Math.random().toString(36),
-  );
+  const startTime = useRef(0);
+  const sessionId = useRef("");
 
   useEffect(() => {
+    if (!sessionId.current) {
+      sessionId.current =
+        typeof crypto !== "undefined"
+          ? crypto.randomUUID()
+          : Math.random().toString(36);
+    }
     startTime.current = Date.now();
 
     const sendEngagement = () => {

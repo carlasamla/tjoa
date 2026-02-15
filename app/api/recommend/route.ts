@@ -345,7 +345,7 @@ Search Swedish retailers, find a specific product that matches, verify the produ
 
       try {
         parsed = JSON.parse(jsonMatch[0]);
-      } catch (parseError) {
+      } catch {
         console.error(`[recommend] Attempt ${attempt + 1}: JSON parse failed:`, jsonMatch[0].slice(0, 200));
         if (attempt === MAX_ATTEMPTS - 1) {
           return NextResponse.json(
