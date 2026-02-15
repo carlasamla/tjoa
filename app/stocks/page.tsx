@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import type { StockPreferences, StockRecommendation, StockResponse } from "@/app/lib/types";
 import { SearchForm } from "@/app/components/SearchForm";
@@ -28,8 +28,14 @@ export default function StocksPage() {
   const [error, setError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // Prevent rapid-fire duplicate requests (2 second cooldown)
+  const lastSubmitRef = useRef<number>(0);
+
   const handleSearch = useCallback(async () => {
     if (!query.trim()) return;
+    const now = Date.now();
+    if (now - lastSubmitRef.current < 2000) return;
+    lastSubmitRef.current = now;
 
     setIsLoading(true);
     setError(null);

@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import type { GuideQuestion } from "@/app/lib/types";
+import { ResponseCache, RateLimiter, buildCacheKey } from "@/app/lib/api-cache";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+// Cache guide questions for 10 minutes — these change rarely for the same query
+const guideCache = new ResponseCache<{ questions: GuideQuestion[] }>({
+  maxSize: 50,
+  ttlSeconds: 600,
+});
+
+// Allow max 5 requests per minute per IP
+const rateLimiter = new RateLimiter({ maxRequests: 5, windowSeconds: 60 });
 
 const SYSTEM_PROMPT = `You generate short, helpful follow-up questions to help a user find the right product.
 
@@ -41,6 +51,15 @@ const errorMessages = {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit by IP
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (!rateLimiter.allow(ip)) {
+      return NextResponse.json(
+        { success: false, error: "Too many requests." },
+        { status: 429 },
+      );
+    }
+
     const body = await request.json();
     const { query, locale = "sv" } = body;
     const lang = locale === "sv" ? "sv" : "en";
@@ -51,6 +70,14 @@ export async function POST(request: NextRequest) {
         { success: false, error: err.emptyQuery },
         { status: 400 },
       );
+    }
+
+    // Check cache first
+    const cacheKey = buildCacheKey(query, locale);
+    const cached = guideCache.get(cacheKey);
+    if (cached) {
+      console.log(`[guide] Cache hit for query: "${query.trim()}"`);
+      return NextResponse.json({ success: true, ...cached });
     }
 
     const langName = locale === "sv" ? "Swedish" : "English";
@@ -108,6 +135,9 @@ Generate follow-up questions to help find the perfect product.`;
         { status: 500 },
       );
     }
+
+    // Cache the result
+    guideCache.set(cacheKey, { questions });
 
     return NextResponse.json({ success: true, questions });
   } catch (error) {

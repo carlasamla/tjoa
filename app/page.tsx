@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import type {
   UserPreferences,
@@ -86,6 +86,10 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [guideQuestions, setGuideQuestions] = useState<GuideQuestion[] | null>(null);
 
+  // Prevent rapid-fire duplicate requests (2 second cooldown)
+  const lastSubmitRef = useRef<number>(0);
+  const COOLDOWN_MS = 2000;
+
   const doSearch = useCallback(
     async (guideAnswers?: GuideAnswer[]) => {
       setPhase("searching");
@@ -123,11 +127,17 @@ export default function Home() {
 
   const handleSearch = useCallback(() => {
     if (!query.trim()) return;
+    const now = Date.now();
+    if (now - lastSubmitRef.current < COOLDOWN_MS) return;
+    lastSubmitRef.current = now;
     doSearch();
   }, [query, doSearch]);
 
   const handleGuide = useCallback(async () => {
     if (!query.trim()) return;
+    const now = Date.now();
+    if (now - lastSubmitRef.current < COOLDOWN_MS) return;
+    lastSubmitRef.current = now;
 
     setPhase("guide-loading");
     setError(null);
