@@ -52,9 +52,15 @@ export function ProductCard({ recommendation, searchId }: ProductCardProps) {
         </span>
       </p>
 
-      <p className="mt-2 text-center text-xs text-muted">{recommendation.reason}</p>
+      <p className="mt-2 text-center text-xs font-medium text-foreground/80">{recommendation.reason}</p>
 
-      <div className="mt-3 flex justify-center">
+      {recommendation.summary && recommendation.summary !== recommendation.reason && (
+        <p className="mt-3 text-left text-sm leading-relaxed text-muted">
+          {recommendation.summary}
+        </p>
+      )}
+
+      <div className="mt-4 flex justify-center">
         <a
           href={recommendation.buyLink}
           target="_blank"

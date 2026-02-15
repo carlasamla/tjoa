@@ -8,6 +8,7 @@ export interface ProductRecommendation {
   productName: string;
   price: string;
   reason: string;
+  summary: string;
   buyLink: string;
   imageUrl: string | null;
   retailer: string;
