@@ -16,31 +16,16 @@ const guideCache = new ResponseCache<{ questions: GuideQuestion[] }>({
 // Allow max 5 requests per minute per IP
 const rateLimiter = new RateLimiter({ maxRequests: 5, windowSeconds: 60 });
 
-const SYSTEM_PROMPT = `You generate short, helpful follow-up questions to help a user find the right product.
-
-Given a product search query, return 3–5 questions that would help narrow down the best match. Each question should have 3–4 short answer options.
+const SYSTEM_PROMPT = `Generate 3-5 follow-up questions to narrow down a product search. Each with 3-4 short options (1-5 words).
 
 Rules:
-- Questions must be directly relevant to the specific product type in the query.
-- Keep questions short (one line).
-- Keep options short (1–5 words each).
-- Don't repeat information already in the query.
-- If the query already specifies a detail (e.g. "32GB RAM laptop"), don't ask about that detail.
-- Focus on the most important differentiating factors for that product category.
-- CLOTHING & SHOES SIZE RULE: If the query is about clothing, shoes, or any wearable item (e.g. jacka, tröja, byxor, klänning, skor, sneakers, boots, t-shirt, hoodie, shorts, jeans, dress, jacket, pants, coat, shirt), you MUST include a SIZE question as the FIRST question. Use appropriate size options for the product type:
-  - Clothing: "XS", "S", "M", "L", "XL" (or "34", "36", "38", "40", "42" for more formal clothing)
-  - Shoes: Common EU sizes like "36–37", "38–39", "40–41", "42–43", "44–45"
-  - If the query already specifies a size, skip this question.
-- ALWAYS include a budget question as the SECOND TO LAST question. Use price ranges calibrated to the product category. Examples:
-  - Headphones: "Under 500 kr", "500–1 500 kr", "1 500–3 000 kr", "Över 3 000 kr"
-  - Laptops: "Under 8 000 kr", "8 000–15 000 kr", "15 000–25 000 kr", "Över 25 000 kr"
-  - TVs: "Under 5 000 kr", "5 000–10 000 kr", "10 000–20 000 kr", "Över 20 000 kr"
-  Adapt the ranges to what makes sense for the specific product type.
-- ALWAYS include a priority question as the LAST question, asking what matters most. Use options like: "Lägsta pris" / "Lowest price", "Bäst värde för pengarna" / "Best value", "Premiumkvalitet" / "Premium quality".
-- Write questions and options in the same language as the user's query. If the query is in Swedish, write in Swedish. If in English, write in English.
+- Relevant to product type. Don't repeat info already in query.
+- CLOTHING/SHOES: First question MUST be size (clothing: XS/S/M/L/XL, shoes: EU 36-37/38-39/40-41/42-43/44-45). Skip if size already in query.
+- Second-to-last: budget question with category-appropriate SEK ranges.
+- Last: priority question ("Lägsta pris"/"Bäst värde"/"Premiumkvalitet").
+- Match query language (Swedish/English).
 
-Return ONLY a JSON array, no other text:
-[{"id":"q1","question":"...","options":["...","...","..."]},...]`;
+Return ONLY JSON: [{"id":"q1","question":"...","options":["...","..."]}]`;
 
 const errorMessages = {
   sv: {
@@ -92,8 +77,15 @@ Generate follow-up questions to help find the perfect product.`;
 
     const response = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 512,
-      system: SYSTEM_PROMPT,
+      max_tokens: 300,
+      temperature: 0,
+      system: [
+        {
+          type: "text",
+          text: SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       messages: [{ role: "user", content: msg }],
     });
 
