@@ -19,68 +19,20 @@ const recommendCache = new ResponseCache<{ recommendation: ProductRecommendation
 // Allow max 5 requests per minute per IP
 const rateLimiter = new RateLimiter({ maxRequests: 5, windowSeconds: 60 });
 
-const SYSTEM_PROMPT = `You are an expert product advisor for Swedish consumers. Your job is to find the ONE best product for the user and explain why it's the right choice. You combine web search, review analysis, and product knowledge to make a genuinely helpful recommendation.
+const SYSTEM_PROMPT = `Product advisor for Swedish consumers. Find the ONE best product. Return ONLY JSON.
 
-## YOUR APPROACH
-Think like a knowledgeable friend who has done all the research. Don't just match specs — find the product that will actually make the user happiest. Consider:
-- Does it match what they asked for? (specs, type, size, features)
-- Is it well-reviewed by real buyers?
-- Is it good value for the money?
-- Is the brand reliable with good support?
-- Are there common complaints or known issues to avoid?
+RULES:
+1. MATCH QUERY EXACTLY: "stationär dator"=desktop not laptop. "32 ram"=32GB minimum. "55 tum"=55 inches. Every spec word matters.
+2. buyLink = EXACT product page URL with product ID. Same product as productName. Never category/search pages.
+3. SWEDISH RETAILERS ONLY: Elgiganten, NetOnNet, Webhallen, Kjell, CDON, Dustin, Komplett, MediaMarkt, IKEA.
+4. IN STOCK + numeric SEK price. Skip "Slut i lager", "Kontakta butik".
+5. Recommend the product itself, not accessories.
+6. Always return a result. If no exact match, find closest and explain.
 
-## CRITICAL RULES
+SEARCH: Parse query → search 2-3 Swedish retailers → compare → verify product page → pick best.
 
-### 1. MATCH THE SEARCH QUERY EXACTLY
-Every word in the user's search matters:
-- "stationär dator" = DESKTOP computer. NEVER return a laptop.
-- "laptop" = LAPTOP. NEVER return a desktop.
-- "32 ram" or "32GB RAM" = must have 32GB RAM. NEVER return 16GB.
-- "55 tum TV" = must be 55 inches. NEVER return 50 or 65 inch.
-- "trådlös mus" = must be wireless. NEVER return a wired mouse.
-If the user specifies a spec, the product MUST match it or better. If no exact match exists, find the closest and explain the difference.
-
-### 2. THE LINK MUST GO TO THE EXACT PRODUCT YOU RECOMMEND
-The buyLink URL must point to THE SAME product as productName.
-- First, find the product. Note its exact name, specs, and price.
-- Then, get the URL from THAT product's page on the retailer's site.
-- NEVER mix products: don't show one product's name but link to another.
-- VERIFY: The product ID/name in the URL should match the product you recommend.
-
-### 3. THE LINK MUST BE A SPECIFIC PRODUCT PAGE
-The buyLink must be a direct URL to a product page where the user can buy it.
-- GOOD: "komplett.se/product/1234567" (specific product with ID)
-- GOOD: "elgiganten.se/product/namn-pa-produkt/123456" (with article number)
-- BAD: "komplett.se/category/datorer" (category page)
-- BAD: "elgiganten.se/search?q=dator" (search results page)
-The URL MUST contain a product ID or article number.
-
-### 4. ONLY SWEDISH RETAILERS
-Search: Elgiganten, NetOnNet, Webhallen, Kjell, CDON, Dustin, Komplett, MediaMarkt, IKEA.
-NEVER use Amazon, eBay, or non-Swedish sites.
-
-### 5. PRODUCT MUST BE IN STOCK WITH A REAL PRICE
-- Only recommend products that are in stock.
-- Skip products marked "Slut i lager", "Slutsåld", "Ej i lager", etc.
-- Price must be numeric in SEK (e.g. "12 499 kr"). NEVER use "Kontakta butik" or "N/A".
-
-### 6. RECOMMEND THE ACTUAL PRODUCT, NOT ACCESSORIES
-"TV" = television, not a TV mount. "dator" = computer, not a keyboard.
-
-### 7. ALWAYS RETURN A RESULT
-Always return a recommendation. If no exact match, find the closest and explain what differs.
-
-## SEARCH STRATEGY
-1. Parse the query: product type, required specs, budget, priority (cheapest / value / premium)
-2. Search Swedish retailer websites — look at 2–3 candidates if possible
-3. Compare options considering: price, reviews/ratings, specs, brand reputation
-4. Pick the best overall match based on the user's priority
-5. Open the product page to verify: name, specs, price, stock, URL
-6. Write a helpful summary explaining your reasoning
-
-## RESPONSE FORMAT
-Return ONLY a JSON object, no other text:
-{"productName":"Full product name with key specs","price":"XX XXX kr","reason":"1-2 short casual sentences in the requested language. Say why this is a good pick for the user — like a friend giving quick advice. Skip technical specs and marketing fluff. NEVER include <cite> tags or any citation markup.","summary":"","buyLink":"https://retailer.se/product/exact-product-page-url","imageUrl":"URL or null","retailer":"Retailer name"}`;
+JSON format:
+{"productName":"Full name with specs","price":"XX XXX kr","reason":"1-2 casual sentences in requested language. No <cite> tags.","summary":"","buyLink":"https://retailer.se/product/url","imageUrl":"URL or null","retailer":"Name"}`;
 
 /**
  * Checks if a URL looks like a specific product page rather than a category/listing page.
@@ -269,15 +221,10 @@ export async function POST(request: NextRequest) {
       guideContext = `\n\nAdditional preferences from guide:\n${lines.join("\n")}`;
     }
 
-    const msg = `I want to buy: "${query.trim()}"
-
-Budget: ${preferences.minPrice}–${preferences.maxPrice} kr
-Priority: ${prio}
-Write the reason in ${langName}.${guideContext}
-
-IMPORTANT: Read my search query carefully. Every word matters. If I specify a product type (e.g. "stationär dator" means desktop, "laptop" means laptop), specs (e.g. "32 ram" means 32GB RAM), size, color, or any other detail — the product you recommend MUST match those criteria.${guideContext ? "\nAlso factor in the additional preferences from the guide above when choosing the best product. If a SIZE was specified (clothing size like S/M/L/XL or shoe size like 42), the product MUST be available in that size. Include the size in your search query." : ""}
-
-Search Swedish retailers, find a specific product that matches, verify the product page URL, and return the JSON.`;
+    const msg = `Buy: "${query.trim()}"
+Budget: ${preferences.minPrice}–${preferences.maxPrice} kr. Priority: ${prio}.
+Reason in ${langName}.${guideContext}${guideContext ? "\nIf a SIZE was specified (S/M/L/XL or shoe size), product MUST be in that size. Include size in search." : ""}
+Search Swedish retailers, verify product page URL, return JSON.`;
 
     const messages: Anthropic.MessageParam[] = [
       { role: "user", content: msg },
@@ -293,14 +240,21 @@ Search Swedish retailers, find a specific product that matches, verify the produ
       try {
         response = await callAnthropicWithRetry({
           model: "claude-haiku-4-5-20251001",
-          max_tokens: 1024,
-          system: SYSTEM_PROMPT,
+          max_tokens: 512,
+          temperature: 0,
+          system: [
+            {
+              type: "text",
+              text: SYSTEM_PROMPT,
+              cache_control: { type: "ephemeral" },
+            },
+          ],
           messages,
           tools: [
             {
               type: "web_search_20250305",
               name: "web_search",
-              max_uses: 5,
+              max_uses: 3,
             },
           ],
         });
@@ -382,7 +336,7 @@ Search Swedish retailers, find a specific product that matches, verify the produ
                   { role: "assistant", content: fullText },
                   {
                     role: "user",
-                    content: `WRONG: I searched for "${query.trim()}" which requires a ${queryKeyword}, but you recommended "${parsed?.productName}" which is a ${bad}. These are completely different product types. Search again and find a product that is actually a ${queryKeyword}. Return the corrected JSON.`,
+                    content: `Wrong type: need ${queryKeyword}, got ${bad}. Search again. Return corrected JSON.`,
                   },
                 );
               }
@@ -411,7 +365,7 @@ Search Swedish retailers, find a specific product that matches, verify the produ
                 { role: "assistant", content: fullText },
                 {
                   role: "user",
-                  content: `WRONG: I asked for ${requestedRam}GB RAM but you recommended "${parsed.productName}" which only has ${productRam}GB RAM. Find a product with at least ${requestedRam}GB RAM. Return the corrected JSON.`,
+                  content: `Wrong RAM: need ${requestedRam}GB, got ${productRam}GB. Find one with ${requestedRam}GB+. Return corrected JSON.`,
                 },
               );
               parsed = null;
@@ -429,7 +383,7 @@ Search Swedish retailers, find a specific product that matches, verify the produ
             { role: "assistant", content: fullText },
             {
               role: "user",
-              content: `WRONG: "${parsed.buyLink}" is a category/listing page, NOT a specific product page. I need the URL to the EXACT product "${parsed.productName}" where I can add it to my cart. Search for "${parsed.productName}" on ${parsed.retailer}'s website and give me the direct product page URL with a product ID/article number in the URL. Return the corrected JSON. Remember: the link MUST go to the SAME product you put in productName.`,
+              content: `Wrong URL: "${parsed.buyLink}" is a category page. Find the direct product page URL for "${parsed.productName}" on ${parsed.retailer} with product ID in URL. Return corrected JSON.`,
             },
           );
           continue;
@@ -444,7 +398,7 @@ Search Swedish retailers, find a specific product that matches, verify the produ
             { role: "assistant", content: fullText },
             {
               role: "user",
-              content: `WRONG: The price "${parsed.price}" is not a valid price — the product is likely out of stock or unavailable. Find a DIFFERENT product that is actually IN STOCK with a real numeric price in SEK (e.g. "1 299 kr"). Search again on a Swedish retailer and return a new recommendation. Make sure the link goes to the exact product you name.`,
+              content: `Invalid price "${parsed.price}". Find a different in-stock product with numeric SEK price. Return corrected JSON.`,
             },
           );
           parsed = null;

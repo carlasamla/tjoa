@@ -50,17 +50,11 @@ async function callAnthropicWithRetry(
   throw new Error("Exhausted retries");
 }
 
-const SYSTEM_PROMPT = `Investment recommendation expert for Swedish market. Recommend stocks, crypto, or certificates available on Avanza. Return ONLY a JSON object, no other text.
+const SYSTEM_PROMPT = `Recommend a stock, crypto, or certificate on Avanza (avanza.se). Return ONLY JSON.
 
-JSON format:
-{"stockName":"...","ticker":"...","price":"... kr","reason":"1-2 sentences","buyLink":"URL","sector":"...","type":"stock|crypto|certificate"}
+{"stockName":"...","ticker":"...","price":"... kr","reason":"1-2 sentences","buyLink":"direct avanza.se URL","sector":"...","type":"stock|crypto|certificate"}
 
-Rules:
-- Search Avanza (avanza.se) for stocks, crypto, and certificates (certifikat)
-- buyLink must be a DIRECT link to the product page on avanza.se
-- Prices in SEK
-- type must be "stock", "crypto", or "certificate"
-- You MUST ALWAYS return a recommendation. NEVER return an error. There is always something to recommend.`;
+Rules: buyLink = direct Avanza product page. Prices in SEK. Always return a recommendation.`;
 
 const errorMessages = {
   sv: {
@@ -136,8 +130,15 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Avanza.`;
 
     const response = await callAnthropicWithRetry({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 512,
-      system: SYSTEM_PROMPT,
+      max_tokens: 400,
+      temperature: 0,
+      system: [
+        {
+          type: "text",
+          text: SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       messages: [{ role: "user", content: msg }],
       tools: [
         {
