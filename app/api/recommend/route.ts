@@ -9,20 +9,61 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-const SYSTEM_PROMPT = `Product recommendation expert for Swedish market. Return ONLY a JSON object, no other text.
+const SYSTEM_PROMPT = `You are a product search engine for Swedish consumers. Your job is to find ONE specific product that EXACTLY matches what the user is looking for, and return a direct link to buy it.
 
-JSON format:
-{"productName":"...","price":"... kr","reason":"1-2 sentences","buyLink":"URL","imageUrl":"URL or null","retailer":"..."}
+## CRITICAL RULES — FOLLOW EVERY SINGLE ONE
 
-Rules:
-- Search Swedish retailers: Elgiganten, NetOnNet, Webhallen, Kjell, CDON, Dustin, Komplett, MediaMarkt, IKEA
-- NEVER use Amazon or non-Swedish sites
-- Prices in SEK
-- IMPORTANT: Recommend the actual product the user is asking for, NOT accessories or related items. For example if the user asks for "TV", recommend an actual television set, NOT a TV remote control, TV mount, or TV cable. If the user asks for "printer", recommend an actual printer, NOT ink cartridges or paper.
-- buyLink MUST be a URL to the SPECIFIC product page where the user can add it to cart and buy it. NEVER link to a category page, search results page, or listing page. The URL must contain a product ID or unique product slug. For example on Elgiganten a valid URL looks like "elgiganten.se/product/..../123456" with an article number — a category URL like "elgiganten.se/hem-hushall-tradgard/kaffemaskiner-te/espressomaskin" is WRONG. Always search for the specific product by name on the retailer's site and use that URL.
-- ONLY recommend products that are IN STOCK and available for purchase. NEVER recommend out-of-stock products. If a product page says "Slut i lager", "Slutsåld", "Ej i lager", "Tillfälligt slut", "Out of stock", or similar — skip it and find another product that IS in stock.
-- The price field MUST be a numeric price in SEK (e.g. "1 299 kr"). NEVER use "Kontakta butik", "Pris saknas", "N/A", or any non-numeric price. If no price is listed, the product is not available — find another one.
-- You MUST ALWAYS return a product recommendation. NEVER return an error. If you can't find the exact product, recommend the closest alternative you can find on a Swedish retailer. There is always something to recommend.`;
+### 1. MATCH THE SEARCH QUERY EXACTLY
+This is the most important rule. Every word in the user's search matters:
+- "stationär dator" = DESKTOP computer. NEVER return a laptop.
+- "laptop" = LAPTOP. NEVER return a desktop.
+- "32 ram" or "32GB RAM" = must have 32GB RAM. NEVER return 16GB.
+- "55 tum TV" = must be 55 inches. NEVER return 50 or 65 inch.
+- "trådlös mus" = must be wireless. NEVER return a wired mouse.
+If the user specifies a spec (RAM, storage, screen size, color, etc.), the product you recommend MUST have that exact spec or better. If you cannot find an exact match, find the CLOSEST match and explain in the reason field what differs.
+
+### 2. THE LINK MUST GO TO THE EXACT PRODUCT YOU RECOMMEND
+This is equally critical. The buyLink URL must point to THE SAME product as productName.
+- First, find the product. Note its exact name, specs, and price.
+- Then, get the URL from THAT product's page on the retailer's site.
+- NEVER mix up products: do not display one product's name but link to a different product's URL.
+- VERIFY: The product ID/name in the URL should match the product you are recommending.
+
+### 3. THE LINK MUST BE A SPECIFIC PRODUCT PAGE
+The buyLink must be a direct URL to a product page where the user can add it to cart and buy it.
+- GOOD: "komplett.se/product/1234567" (specific product with ID)
+- GOOD: "elgiganten.se/product/namn-pa-produkt/123456" (with article number)
+- BAD: "komplett.se/category/datorer" (category page)
+- BAD: "elgiganten.se/search?q=dator" (search results page)
+- BAD: "netonnet.se/hem-hushall/datorer" (listing page)
+The URL MUST contain a product ID or article number.
+
+### 4. ONLY SWEDISH RETAILERS
+Search these retailers: Elgiganten, NetOnNet, Webhallen, Kjell, CDON, Dustin, Komplett, MediaMarkt, IKEA.
+NEVER use Amazon, eBay, or non-Swedish sites.
+
+### 5. PRODUCT MUST BE IN STOCK WITH A REAL PRICE
+- Only recommend products that are in stock and available to buy.
+- Skip products marked "Slut i lager", "Slutsåld", "Ej i lager", "Tillfälligt slut", etc.
+- Price must be numeric in SEK (e.g. "12 499 kr"). NEVER use "Kontakta butik", "N/A", or non-numeric prices.
+
+### 6. RECOMMEND THE ACTUAL PRODUCT, NOT ACCESSORIES
+If the user asks for "TV", return a television — not a TV mount or cable.
+If the user asks for "dator", return a computer — not a keyboard or mouse.
+
+### 7. ALWAYS RETURN A RESULT
+You must always return a recommendation. If you can't find the exact product, find the closest match and explain what differs.
+
+## SEARCH STRATEGY
+1. Parse the user's query to understand: product type, required specs, budget
+2. Search for the product on Swedish retailer websites
+3. Find a product that matches ALL specified criteria
+4. Open the product page to verify: name, specs, price, stock status, and URL
+5. Return the result
+
+## RESPONSE FORMAT
+Return ONLY a JSON object, no other text:
+{"productName":"Full product name with key specs","price":"XX XXX kr","reason":"1-2 sentences in requested language","buyLink":"https://retailer.se/product/exact-product-page-url","imageUrl":"URL or null","retailer":"Retailer name"}`;
 
 /**
  * Checks if a URL looks like a specific product page rather than a category/listing page.
@@ -170,14 +211,21 @@ export async function POST(request: NextRequest) {
 
     const prio =
       preferences.qualityPriority <= 25
-        ? "cheapest"
+        ? "cheapest option"
         : preferences.qualityPriority <= 75
-          ? "balanced"
-          : "best quality";
+          ? "balanced (good value for money)"
+          : "best quality (premium)";
 
-    const msg = `Buy: ${query.trim()}
-Budget: ${preferences.minPrice}-${preferences.maxPrice} kr. Priority: ${prio}.
-Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Swedish retailers.`;
+    const langName = locale === "sv" ? "Swedish" : "English";
+    const msg = `I want to buy: "${query.trim()}"
+
+Budget: ${preferences.minPrice}–${preferences.maxPrice} kr
+Priority: ${prio}
+Write the reason in ${langName}.
+
+IMPORTANT: Read my search query carefully. Every word matters. If I specify a product type (e.g. "stationär dator" means desktop, "laptop" means laptop), specs (e.g. "32 ram" means 32GB RAM), size, color, or any other detail — the product you recommend MUST match those criteria.
+
+Search Swedish retailers, find a specific product that matches, verify the product page URL, and return the JSON.`;
 
     const messages: Anthropic.MessageParam[] = [
       { role: "user", content: msg },
@@ -193,14 +241,14 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Swedish retailers.`
       try {
         response = await callAnthropicWithRetry({
           model: "claude-haiku-4-5-20251001",
-          max_tokens: 512,
+          max_tokens: 1024,
           system: SYSTEM_PROMPT,
           messages,
           tools: [
             {
               type: "web_search_20250305",
               name: "web_search",
-              max_uses: 5,
+              max_uses: 10,
             },
           ],
         });
@@ -258,6 +306,69 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Swedish retailers.`
 
       console.log(`[recommend] Parsed product: "${parsed?.productName}" from "${parsed?.retailer}" link: "${parsed?.buyLink}"`);
 
+      // Validate the product type matches the search query
+      // Catch obvious mismatches like searching for "stationär dator" but getting a laptop
+      const queryLower = query.trim().toLowerCase();
+      const productLower = (parsed?.productName || "").toLowerCase();
+      const typeMismatches: [string, string[]][] = [
+        // [query contains, product should NOT be]
+        ["stationär", ["laptop", "bärbar", "notebook", "chromebook"]],
+        ["desktop", ["laptop", "bärbar", "notebook", "chromebook"]],
+        ["laptop", ["stationär", "desktop", "tower"]],
+        ["bärbar", ["stationär", "desktop", "tower"]],
+        ["notebook", ["stationär", "desktop", "tower"]],
+      ];
+      let typeMismatchFound = false;
+      for (const [queryKeyword, badProductWords] of typeMismatches) {
+        if (queryLower.includes(queryKeyword)) {
+          for (const bad of badProductWords) {
+            if (productLower.includes(bad)) {
+              typeMismatchFound = true;
+              console.warn(`[recommend] Attempt ${attempt + 1}: Product type mismatch — query contains "${queryKeyword}" but product "${parsed?.productName}" contains "${bad}"`);
+              if (attempt < MAX_ATTEMPTS - 1) {
+                messages.push(
+                  { role: "assistant", content: fullText },
+                  {
+                    role: "user",
+                    content: `WRONG: I searched for "${query.trim()}" which requires a ${queryKeyword}, but you recommended "${parsed?.productName}" which is a ${bad}. These are completely different product types. Search again and find a product that is actually a ${queryKeyword}. Return the corrected JSON.`,
+                  },
+                );
+              }
+              break;
+            }
+          }
+          if (typeMismatchFound) break;
+        }
+      }
+      if (typeMismatchFound) {
+        parsed = null;
+        continue;
+      }
+
+      // Check RAM mismatch: if query specifies RAM, product should have at least that amount
+      const queryRamMatch = queryLower.match(/(\d+)\s*(?:gb\s*)?ram/);
+      if (queryRamMatch && parsed?.productName) {
+        const requestedRam = parseInt(queryRamMatch[1]);
+        const productRamMatch = productLower.match(/(\d+)\s*(?:gb\s*)?ram/);
+        if (productRamMatch) {
+          const productRam = parseInt(productRamMatch[1]);
+          if (productRam < requestedRam) {
+            console.warn(`[recommend] Attempt ${attempt + 1}: RAM mismatch — requested ${requestedRam}GB but product has ${productRam}GB`);
+            if (attempt < MAX_ATTEMPTS - 1) {
+              messages.push(
+                { role: "assistant", content: fullText },
+                {
+                  role: "user",
+                  content: `WRONG: I asked for ${requestedRam}GB RAM but you recommended "${parsed.productName}" which only has ${productRam}GB RAM. Find a product with at least ${requestedRam}GB RAM. Return the corrected JSON.`,
+                },
+              );
+              parsed = null;
+              continue;
+            }
+          }
+        }
+      }
+
       // Validate the buyLink is a specific product page, not a category
       if (parsed?.buyLink && !isProductPageUrl(parsed.buyLink)) {
         console.warn(`[recommend] Attempt ${attempt + 1}: URL rejected as category page: "${parsed.buyLink}"`);
@@ -266,7 +377,7 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Swedish retailers.`
             { role: "assistant", content: fullText },
             {
               role: "user",
-              content: `WRONG: "${parsed.buyLink}" is a category/listing page, NOT a specific product page. I need the URL to the EXACT product "${parsed.productName}" where I can add it to my cart. Search for "${parsed.productName}" on ${parsed.retailer}'s website and give me the direct product page URL with a product ID/article number. Return the corrected JSON.`,
+              content: `WRONG: "${parsed.buyLink}" is a category/listing page, NOT a specific product page. I need the URL to the EXACT product "${parsed.productName}" where I can add it to my cart. Search for "${parsed.productName}" on ${parsed.retailer}'s website and give me the direct product page URL with a product ID/article number in the URL. Return the corrected JSON. Remember: the link MUST go to the SAME product you put in productName.`,
             },
           );
           continue;
@@ -281,7 +392,7 @@ Reason in ${locale === "sv" ? "Swedish" : "English"}. Search Swedish retailers.`
             { role: "assistant", content: fullText },
             {
               role: "user",
-              content: `WRONG: The price "${parsed.price}" is not a valid price — the product is likely out of stock or unavailable. Find a DIFFERENT product that is actually IN STOCK with a real numeric price in SEK (e.g. "1 299 kr"). Search again and return a new recommendation.`,
+              content: `WRONG: The price "${parsed.price}" is not a valid price — the product is likely out of stock or unavailable. Find a DIFFERENT product that is actually IN STOCK with a real numeric price in SEK (e.g. "1 299 kr"). Search again on a Swedish retailer and return a new recommendation. Make sure the link goes to the exact product you name.`,
             },
           );
           parsed = null;
