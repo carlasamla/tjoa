@@ -54,6 +54,34 @@ export function getAffiliateConfig(): AffiliateConfig {
         advertiserId: process.env.ADTRACTION_IKEA_ID || "",
         enabled: !!process.env.ADTRACTION_IKEA_ID,
       },
+      zalando: {
+        advertiserId: process.env.ADTRACTION_ZALANDO_ID || "",
+        enabled: !!process.env.ADTRACTION_ZALANDO_ID,
+      },
+      stadium: {
+        advertiserId: process.env.ADTRACTION_STADIUM_ID || "",
+        enabled: !!process.env.ADTRACTION_STADIUM_ID,
+      },
+      xxl: {
+        advertiserId: process.env.ADTRACTION_XXL_ID || "",
+        enabled: !!process.env.ADTRACTION_XXL_ID,
+      },
+      intersport: {
+        advertiserId: process.env.ADTRACTION_INTERSPORT_ID || "",
+        enabled: !!process.env.ADTRACTION_INTERSPORT_ID,
+      },
+      boozt: {
+        advertiserId: process.env.ADTRACTION_BOOZT_ID || "",
+        enabled: !!process.env.ADTRACTION_BOOZT_ID,
+      },
+      "na-kd": {
+        advertiserId: process.env.ADTRACTION_NAKD_ID || "",
+        enabled: !!process.env.ADTRACTION_NAKD_ID,
+      },
+      nakd: {
+        advertiserId: process.env.ADTRACTION_NAKD_ID || "",
+        enabled: !!process.env.ADTRACTION_NAKD_ID,
+      },
       avanza: {
         advertiserId: process.env.ADTRACTION_AVANZA_ID || "",
         enabled: !!process.env.ADTRACTION_AVANZA_ID,

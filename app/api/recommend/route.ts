@@ -24,7 +24,7 @@ const SYSTEM_PROMPT = `Product advisor for Swedish consumers. Find the ONE best 
 RULES:
 1. MATCH QUERY EXACTLY: "stationär dator"=desktop not laptop. "32 ram"=32GB minimum. "55 tum"=55 inches. Every spec word matters.
 2. buyLink = EXACT product page URL with product ID. Same product as productName. Never category/search pages.
-3. SWEDISH RETAILERS ONLY: Elgiganten, NetOnNet, Webhallen, Kjell, CDON, Dustin, Komplett, MediaMarkt, IKEA.
+3. SWEDISH RETAILERS ONLY: Elgiganten, NetOnNet, Webhallen, Kjell, CDON, Dustin, Komplett, MediaMarkt, IKEA, Zalando, Stadium, XXL, Intersport, Boozt, NA-KD.
 4. IN STOCK + numeric SEK price. Skip "Slut i lager", "Kontakta butik".
 5. Recommend the product itself, not accessories.
 6. Always return a result. If no exact match, find closest and explain.
@@ -65,6 +65,12 @@ function isProductPageUrl(url: string): boolean {
       "komplett.se": [/\/product\//, /\/\d{5,}/],
       "mediamarkt.se": [/\/product\//i, /\/\d{6,}/],
       "ikea.com": [/\/p\/.*-\d{8}/, /\/\d{8}\//],
+      "zalando.se": [/\/[^/]+\.html/, /\/[^/]+-[A-Z0-9]{8,}\.html/],
+      "stadium.se": [/\/product\//, /\/p\/\d+/],
+      "xxl.se": [/\/product\//, /\/p\/\d+/, /\/[^/]+-\d{5,}/],
+      "intersport.se": [/\/product\//, /\/p\/\d+/],
+      "boozt.com": [/\/[^/]+\/[^/]+\/\d+/, /\/product\//],
+      "na-kd.com": [/\/products\//, /\/[^/]+-\d{4,}/],
     };
 
     // Check if it matches a known category pattern
