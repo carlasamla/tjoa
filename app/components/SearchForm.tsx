@@ -9,6 +9,7 @@ interface SearchFormProps {
   onSubmit: () => void;
   onGuide?: () => void;
   isLoading: boolean;
+  guideActive?: boolean;
   placeholderKey?: string;
   buttonKey?: string;
 }
@@ -19,6 +20,7 @@ export function SearchForm({
   onSubmit,
   onGuide,
   isLoading,
+  guideActive = false,
   placeholderKey = "Search",
   buttonKey = "Search",
 }: SearchFormProps) {
@@ -42,19 +44,25 @@ export function SearchForm({
         disabled={isLoading}
       />
       <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={isLoading || !query.trim()}
-          className="rounded-lg bg-white px-6 py-2 text-sm font-semibold text-black transition-colors hover:bg-white/90 dark:bg-white dark:text-black dark:hover:bg-white/90 disabled:opacity-40"
-        >
-          {tb("button")}
-        </button>
+        {!guideActive && (
+          <button
+            type="submit"
+            disabled={isLoading || !query.trim()}
+            className="rounded-lg bg-white px-6 py-2 text-sm font-semibold text-black transition-colors hover:bg-white/90 dark:bg-white dark:text-black dark:hover:bg-white/90 disabled:opacity-40"
+          >
+            {tb("button")}
+          </button>
+        )}
         {onGuide && (
           <button
             type="button"
             disabled={isLoading || !query.trim()}
-            onClick={onGuide}
-            className="rounded-lg border border-border px-6 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-foreground/10 disabled:opacity-40"
+            onClick={guideActive ? undefined : onGuide}
+            className={
+              guideActive
+                ? "rounded-lg bg-foreground px-6 py-2 text-sm font-semibold text-background cursor-default"
+                : "rounded-lg border border-border px-6 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-foreground/10 disabled:opacity-40"
+            }
           >
             {tb("guideButton")}
           </button>

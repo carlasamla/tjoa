@@ -29,6 +29,7 @@
   "Guide": {
     "skip": "Skip",
     "search": "Find product",
+    "searchAnyway": "Find product",
     "loading": "Generating questions...",
     "error": "Could not generate questions. Searching directly..."
   },
