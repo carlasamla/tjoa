@@ -23,12 +23,19 @@ export function GuideQuestions({
   const t = useTranslations("Guide");
   const [selections, setSelections] = useState<Record<string, string>>({});
 
-  const allAnswered = questions.every((q) => selections[q.id]);
+  const hasAnyAnswer = questions.some((q) => selections[q.id]);
 
   const handleOptionChange = (questionId: string, question: string, values: string[]) => {
     const value = values[0];
     if (value) {
       setSelections((prev) => ({ ...prev, [questionId]: value }));
+    } else {
+      // Deselected — remove the answer
+      setSelections((prev) => {
+        const next = { ...prev };
+        delete next[questionId];
+        return next;
+      });
     }
   };
 
@@ -87,10 +94,10 @@ export function GuideQuestions({
         </button>
         <button
           onClick={handleSubmit}
-          disabled={isLoading || !allAnswered}
+          disabled={isLoading}
           className="rounded-lg bg-foreground px-5 py-2 text-sm font-semibold text-background transition-colors hover:bg-foreground/90 disabled:opacity-40"
         >
-          {t("search")}
+          {hasAnyAnswer ? t("search") : t("searchAnyway")}
         </button>
       </div>
     </div>

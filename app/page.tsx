@@ -196,6 +196,7 @@ export default function Home() {
           onSubmit={handleSearch}
           onGuide={handleGuide}
           isLoading={isLoading}
+          guideActive={phase === "guide-loading" || phase === "guide"}
         />
 
         {phase === "guide-loading" && (
