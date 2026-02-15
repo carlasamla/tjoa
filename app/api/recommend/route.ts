@@ -275,7 +275,7 @@ Budget: ${preferences.minPrice}–${preferences.maxPrice} kr
 Priority: ${prio}
 Write the reason in ${langName}.${guideContext}
 
-IMPORTANT: Read my search query carefully. Every word matters. If I specify a product type (e.g. "stationär dator" means desktop, "laptop" means laptop), specs (e.g. "32 ram" means 32GB RAM), size, color, or any other detail — the product you recommend MUST match those criteria.${guideContext ? "\nAlso factor in the additional preferences from the guide above when choosing the best product." : ""}
+IMPORTANT: Read my search query carefully. Every word matters. If I specify a product type (e.g. "stationär dator" means desktop, "laptop" means laptop), specs (e.g. "32 ram" means 32GB RAM), size, color, or any other detail — the product you recommend MUST match those criteria.${guideContext ? "\nAlso factor in the additional preferences from the guide above when choosing the best product. If a SIZE was specified (clothing size like S/M/L/XL or shoe size like 42), the product MUST be available in that size. Include the size in your search query." : ""}
 
 Search Swedish retailers, find a specific product that matches, verify the product page URL, and return the JSON.`;
 
