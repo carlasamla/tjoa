@@ -21,6 +21,28 @@ import { Footer } from "@/app/components/Footer";
 
 type Phase = "idle" | "guide-loading" | "guide" | "searching";
 
+/**
+ * Detects whether a search query is about clothing, shoes, or wearable items
+ * where size matters. Used to auto-trigger the guide so users are asked about size.
+ */
+function isClothingOrShoes(query: string): boolean {
+  const lower = query.toLowerCase().trim();
+  const keywords = [
+    // Swedish
+    "skor", "sko", "sneakers", "boots", "stövlar", "sandaler", "tofflor",
+    "jacka", "jackor", "tröja", "tröjor", "byxor", "jeans", "shorts",
+    "klänning", "klänningar", "skjorta", "skjortor", "t-shirt", "hoodie",
+    "kappa", "rock", "väst", "kostym", "kavaj", "blus", "topp",
+    "träningsbyxor", "löparskor", "vandringsskor", "kängor",
+    // English
+    "shoes", "shoe", "sneaker", "boot", "sandals", "slippers",
+    "jacket", "sweater", "pants", "trousers", "dress", "shirt",
+    "coat", "vest", "suit", "blazer", "blouse", "top", "hoodie",
+    "running shoes", "hiking boots", "trainers",
+  ];
+  return keywords.some((kw) => lower.includes(kw));
+}
+
 /** Wide-open defaults — the AI picks the best value on its own. */
 const DEFAULT_PREFERENCES: UserPreferences = {
   minPrice: 0,
@@ -126,21 +148,7 @@ export default function Home() {
     [query, locale, t],
   );
 
-  const handleSearch = useCallback(() => {
-    if (!query.trim()) return;
-    const now = Date.now();
-    if (now - lastSubmitRef.current < COOLDOWN_MS) return;
-    lastSubmitRef.current = now;
-    setGuideDone(false);
-    doSearch();
-  }, [query, doSearch]);
-
-  const handleGuide = useCallback(async () => {
-    if (!query.trim()) return;
-    const now = Date.now();
-    if (now - lastSubmitRef.current < COOLDOWN_MS) return;
-    lastSubmitRef.current = now;
-
+  const triggerGuide = useCallback(async () => {
     setGuideDone(false);
     setPhase("guide-loading");
     setError(null);
@@ -168,6 +176,30 @@ export default function Home() {
     // If guide fails or returns nothing, search directly
     doSearch();
   }, [query, locale, doSearch]);
+
+  const handleSearch = useCallback(() => {
+    if (!query.trim()) return;
+    const now = Date.now();
+    if (now - lastSubmitRef.current < COOLDOWN_MS) return;
+    lastSubmitRef.current = now;
+    setGuideDone(false);
+
+    // Auto-trigger guide for clothing/shoes so the user is asked about size
+    if (isClothingOrShoes(query) && !guideDone) {
+      triggerGuide();
+      return;
+    }
+
+    doSearch();
+  }, [query, doSearch, guideDone, triggerGuide]);
+
+  const handleGuide = useCallback(() => {
+    if (!query.trim()) return;
+    const now = Date.now();
+    if (now - lastSubmitRef.current < COOLDOWN_MS) return;
+    lastSubmitRef.current = now;
+    triggerGuide();
+  }, [query, triggerGuide]);
 
   const handleGuideSubmit = useCallback(
     (answers: GuideAnswer[]) => {

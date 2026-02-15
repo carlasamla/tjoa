@@ -27,6 +27,10 @@ Rules:
 - Don't repeat information already in the query.
 - If the query already specifies a detail (e.g. "32GB RAM laptop"), don't ask about that detail.
 - Focus on the most important differentiating factors for that product category.
+- CLOTHING & SHOES SIZE RULE: If the query is about clothing, shoes, or any wearable item (e.g. jacka, tröja, byxor, klänning, skor, sneakers, boots, t-shirt, hoodie, shorts, jeans, dress, jacket, pants, coat, shirt), you MUST include a SIZE question as the FIRST question. Use appropriate size options for the product type:
+  - Clothing: "XS", "S", "M", "L", "XL" (or "34", "36", "38", "40", "42" for more formal clothing)
+  - Shoes: Common EU sizes like "36–37", "38–39", "40–41", "42–43", "44–45"
+  - If the query already specifies a size, skip this question.
 - ALWAYS include a budget question as the SECOND TO LAST question. Use price ranges calibrated to the product category. Examples:
   - Headphones: "Under 500 kr", "500–1 500 kr", "1 500–3 000 kr", "Över 3 000 kr"
   - Laptops: "Under 8 000 kr", "8 000–15 000 kr", "15 000–25 000 kr", "Över 25 000 kr"
