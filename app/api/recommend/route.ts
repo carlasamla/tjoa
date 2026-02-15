@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     locale = body.locale || "sv";
-    const { query, preferences } = body;
+    const { query, preferences, guideAnswers } = body;
     const lang = locale === "sv" ? "sv" : "en";
     const err = errorMessages[lang] || errorMessages.sv;
 
@@ -217,13 +217,22 @@ export async function POST(request: NextRequest) {
           : "best quality (premium)";
 
     const langName = locale === "sv" ? "Swedish" : "English";
+
+    let guideContext = "";
+    if (Array.isArray(guideAnswers) && guideAnswers.length > 0) {
+      const lines = guideAnswers.map(
+        (a: { question: string; answer: string }) => `- ${a.question} → ${a.answer}`,
+      );
+      guideContext = `\n\nAdditional preferences from guide:\n${lines.join("\n")}`;
+    }
+
     const msg = `I want to buy: "${query.trim()}"
 
 Budget: ${preferences.minPrice}–${preferences.maxPrice} kr
 Priority: ${prio}
-Write the reason in ${langName}.
+Write the reason in ${langName}.${guideContext}
 
-IMPORTANT: Read my search query carefully. Every word matters. If I specify a product type (e.g. "stationär dator" means desktop, "laptop" means laptop), specs (e.g. "32 ram" means 32GB RAM), size, color, or any other detail — the product you recommend MUST match those criteria.
+IMPORTANT: Read my search query carefully. Every word matters. If I specify a product type (e.g. "stationär dator" means desktop, "laptop" means laptop), specs (e.g. "32 ram" means 32GB RAM), size, color, or any other detail — the product you recommend MUST match those criteria.${guideContext ? "\nAlso factor in the additional preferences from the guide above when choosing the best product." : ""}
 
 Search Swedish retailers, find a specific product that matches, verify the product page URL, and return the JSON.`;
 

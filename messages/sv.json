@@ -25,6 +25,16 @@
     "balanced": "Balanserad",
     "bestQuality": "Bäst kvalitet"
   },
+  "Guide": {
+    "skip": "Hoppa över",
+    "search": "Hitta produkt",
+    "loading": "Genererar frågor...",
+    "error": "Kunde inte generera frågor. Söker direkt..."
+  },
+  "GuideLoading": {
+    "analyzing": "Analyserar din sökning...",
+    "generating": "Genererar frågor..."
+  },
   "Loading": {
     "searching": "Söker på nätet...",
     "reviews": "Läser recensioner...",

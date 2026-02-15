@@ -25,6 +25,16 @@
     "balanced": "Balanced",
     "bestQuality": "Best quality"
   },
+  "Guide": {
+    "skip": "Skip",
+    "search": "Find product",
+    "loading": "Generating questions...",
+    "error": "Could not generate questions. Searching directly..."
+  },
+  "GuideLoading": {
+    "analyzing": "Analyzing your search...",
+    "generating": "Generating questions..."
+  },
   "Loading": {
     "searching": "Searching the web...",
     "reviews": "Reading reviews...",

@@ -1,6 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Collapsible } from "@base-ui/react/collapsible";
+import { Slider } from "@base-ui/react/slider";
 import type { UserPreferences } from "@/app/lib/types";
 
 // Non-linear price stops: small steps at low end, bigger steps toward 1M
@@ -58,9 +60,8 @@ export function SettingsPanel({
   const maxPercent = (maxSlider / SLIDER_MAX) * 100;
 
   return (
-    <div className="mt-4 w-full max-w-md">
-      <button
-        onClick={onToggle}
+    <Collapsible.Root open={isOpen} onOpenChange={onToggle} className="mt-4 w-full max-w-md">
+      <Collapsible.Trigger
         className="mx-auto flex items-center text-muted transition-colors hover:text-foreground"
         aria-label={t("title")}
       >
@@ -82,104 +83,104 @@ export function SettingsPanel({
           <circle cx="16" cy="12" r="2" fill="currentColor" />
           <circle cx="10" cy="18" r="2" fill="currentColor" />
         </svg>
-      </button>
+      </Collapsible.Trigger>
 
-      <div
-        className="grid transition-all duration-300 ease-out"
-        style={{
-          gridTemplateRows: isOpen ? "1fr" : "0fr",
-        }}
-      >
-        <div className="overflow-hidden">
-          <div className="pt-2 pb-1">
-            <div className="mb-3">
-              <label className="mb-2 block text-xs text-muted">
-                {t("priceRange")}{" "}
-                <span className="font-medium text-foreground">
-                  {formatPrice(preferences.minPrice)} – {formatPrice(preferences.maxPrice)} kr
-                </span>
-              </label>
-              <div className="relative h-6">
-                {/* Track background */}
-                <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 rounded-full bg-foreground/20" />
-                {/* Active range highlight */}
-                <div
-                  className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-foreground"
-                  style={{
-                    left: `${minPercent}%`,
-                    width: `${maxPercent - minPercent}%`,
-                  }}
-                />
-                {/* Min thumb */}
-                <input
-                  type="range"
-                  min={0}
-                  max={SLIDER_MAX}
-                  step={1}
-                  value={minSlider}
-                  onChange={(e) => {
-                    const idx = Number(e.target.value);
-                    const price = sliderToPrice(idx);
-                    onPreferencesChange({
-                      ...preferences,
-                      minPrice: Math.min(price, preferences.maxPrice),
-                    });
-                  }}
-                  className="dual-range-thumb pointer-events-none absolute top-0 h-full w-full appearance-none bg-transparent"
-                />
-                {/* Max thumb */}
-                <input
-                  type="range"
-                  min={0}
-                  max={SLIDER_MAX}
-                  step={1}
-                  value={maxSlider}
-                  onChange={(e) => {
-                    const idx = Number(e.target.value);
-                    const price = sliderToPrice(idx);
-                    onPreferencesChange({
-                      ...preferences,
-                      maxPrice: Math.max(price, preferences.minPrice),
-                    });
-                  }}
-                  className="dual-range-thumb pointer-events-none absolute top-0 h-full w-full appearance-none bg-transparent"
-                />
-              </div>
-              <div className="flex justify-between text-xs text-muted">
-                <span>0 kr</span>
-                <span>1M kr</span>
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-xs text-muted">
-                {t("qualityPriority")}{" "}
-                <span className="font-medium text-foreground">
-                  {qualityLabel}
-                </span>
-              </label>
+      <Collapsible.Panel className="overflow-hidden transition-all duration-300 ease-out data-[ending-style]:h-0 data-[starting-style]:h-0">
+        <div className="pt-2 pb-1">
+          <div className="mb-3">
+            <label className="mb-2 block text-xs text-muted">
+              {t("priceRange")}{" "}
+              <span className="font-medium text-foreground">
+                {formatPrice(preferences.minPrice)} – {formatPrice(preferences.maxPrice)} kr
+              </span>
+            </label>
+            <div className="relative h-6">
+              {/* Track background */}
+              <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 rounded-full bg-foreground/20" />
+              {/* Active range highlight */}
+              <div
+                className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-foreground"
+                style={{
+                  left: `${minPercent}%`,
+                  width: `${maxPercent - minPercent}%`,
+                }}
+              />
+              {/* Min thumb */}
               <input
                 type="range"
                 min={0}
-                max={100}
-                value={preferences.qualityPriority}
-                onChange={(e) =>
+                max={SLIDER_MAX}
+                step={1}
+                value={minSlider}
+                onChange={(e) => {
+                  const idx = Number(e.target.value);
+                  const price = sliderToPrice(idx);
                   onPreferencesChange({
                     ...preferences,
-                    qualityPriority: Number(e.target.value),
-                  })
-                }
-                className="w-full"
+                    minPrice: Math.min(price, preferences.maxPrice),
+                  });
+                }}
+                className="dual-range-thumb pointer-events-none absolute top-0 h-full w-full appearance-none bg-transparent"
               />
-              <div className="flex justify-between text-xs text-muted">
-                <span>{t("cheapest")}</span>
-                <span>{t("balanced")}</span>
-                <span>{t("bestQuality")}</span>
-              </div>
+              {/* Max thumb */}
+              <input
+                type="range"
+                min={0}
+                max={SLIDER_MAX}
+                step={1}
+                value={maxSlider}
+                onChange={(e) => {
+                  const idx = Number(e.target.value);
+                  const price = sliderToPrice(idx);
+                  onPreferencesChange({
+                    ...preferences,
+                    maxPrice: Math.max(price, preferences.minPrice),
+                  });
+                }}
+                className="dual-range-thumb pointer-events-none absolute top-0 h-full w-full appearance-none bg-transparent"
+              />
+            </div>
+            <div className="flex justify-between text-xs text-muted">
+              <span>0 kr</span>
+              <span>1M kr</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-xs text-muted">
+              {t("qualityPriority")}{" "}
+              <span className="font-medium text-foreground">
+                {qualityLabel}
+              </span>
+            </label>
+            <Slider.Root
+              value={preferences.qualityPriority}
+              onValueChange={(value) =>
+                onPreferencesChange({
+                  ...preferences,
+                  qualityPriority: value as number,
+                })
+              }
+              min={0}
+              max={100}
+              step={1}
+              className="relative flex w-full touch-none items-center py-2"
+            >
+              <Slider.Control className="relative flex w-full items-center">
+                <Slider.Track className="relative h-1 w-full rounded-full bg-foreground/20">
+                  <Slider.Indicator className="absolute h-full rounded-full bg-foreground" />
+                  <Slider.Thumb className="block h-4 w-4 rounded-full bg-foreground shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30" />
+                </Slider.Track>
+              </Slider.Control>
+            </Slider.Root>
+            <div className="flex justify-between text-xs text-muted">
+              <span>{t("cheapest")}</span>
+              <span>{t("balanced")}</span>
+              <span>{t("bestQuality")}</span>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </Collapsible.Panel>
+    </Collapsible.Root>
   );
 }
