@@ -85,6 +85,7 @@ export default function Home() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [guideQuestions, setGuideQuestions] = useState<GuideQuestion[] | null>(null);
+  const [guideDone, setGuideDone] = useState(false);
 
   // Prevent rapid-fire duplicate requests (2 second cooldown)
   const lastSubmitRef = useRef<number>(0);
@@ -130,6 +131,7 @@ export default function Home() {
     const now = Date.now();
     if (now - lastSubmitRef.current < COOLDOWN_MS) return;
     lastSubmitRef.current = now;
+    setGuideDone(false);
     doSearch();
   }, [query, doSearch]);
 
@@ -139,6 +141,7 @@ export default function Home() {
     if (now - lastSubmitRef.current < COOLDOWN_MS) return;
     lastSubmitRef.current = now;
 
+    setGuideDone(false);
     setPhase("guide-loading");
     setError(null);
     setResult(null);
@@ -168,12 +171,14 @@ export default function Home() {
 
   const handleGuideSubmit = useCallback(
     (answers: GuideAnswer[]) => {
+      setGuideDone(true);
       doSearch(answers);
     },
     [doSearch],
   );
 
   const handleGuideSkip = useCallback(() => {
+    setGuideDone(true);
     doSearch();
   }, [doSearch]);
 
@@ -194,7 +199,7 @@ export default function Home() {
           query={query}
           onQueryChange={setQuery}
           onSubmit={handleSearch}
-          onGuide={handleGuide}
+          onGuide={guideDone ? undefined : handleGuide}
           isLoading={isLoading}
           guideActive={phase === "guide-loading" || phase === "guide"}
         />
