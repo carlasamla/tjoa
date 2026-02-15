@@ -170,12 +170,13 @@ export default function Home() {
         return;
       }
     } catch {
-      // Guide failed — fall through to direct search
+      // Guide failed
     }
 
-    // If guide fails or returns nothing, search directly
-    doSearch();
-  }, [query, locale, doSearch]);
+    // Guide failed or returned nothing — reset to idle so user can retry
+    setPhase("idle");
+    setError(t("genericError"));
+  }, [query, locale, t]);
 
   const handleSearch = useCallback(() => {
     if (!query.trim()) return;
@@ -185,13 +186,13 @@ export default function Home() {
     setGuideDone(false);
 
     // Auto-trigger guide for clothing/shoes so the user is asked about size
-    if (isClothingOrShoes(query) && !guideDone) {
+    if (isClothingOrShoes(query)) {
       triggerGuide();
       return;
     }
 
     doSearch();
-  }, [query, doSearch, guideDone, triggerGuide]);
+  }, [query, doSearch, triggerGuide]);
 
   const handleGuide = useCallback(() => {
     if (!query.trim()) return;
