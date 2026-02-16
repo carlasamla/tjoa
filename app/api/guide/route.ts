@@ -20,7 +20,10 @@ const SYSTEM_PROMPT = `Generate 3-5 follow-up questions to narrow down a product
 
 Rules:
 - Relevant to product type. Don't repeat info already in query.
-- CLOTHING/SHOES: First question MUST be size (clothing: XS/S/M/L/XL/XXL, shoes: EU 36-38/39-41/42-44/45-48). Skip if size already in query. Recommended: M for clothing, EU 42-44 for shoes.
+- CLOTHING/SHOES: First question MUST be size. Skip if size already in query.
+  - Clothing sizes: options ["XS","S","M","L","XL","XXL"]. Recommended: "M".
+  - Shoe sizes: individual EU sizes ["36","37","38","39","40","41","42","43","44","45","46","47","48"]. Recommended: "43".
+  - Size questions may have more than 4 options — that's fine.
 - Second-to-last: budget question with category-appropriate SEK ranges. Recommended: middle range.
 - Last: priority question ("Lägsta pris"/"Bäst värde"/"Premiumkvalitet"). Recommended: "Bäst värde".
 - Match query language (Swedish/English).
