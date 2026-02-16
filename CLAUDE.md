@@ -27,8 +27,8 @@ All AI system prompts live in `app/api/*/route.ts`. When updating them, follow t
 
 ### Keep max_tokens tight
 - Set `max_tokens` to the minimum needed for the response format:
-  - Product recommend: 512 (one JSON object)
-  - Guide questions: 300 (small JSON array)
+  - Product recommend: 1024 (JSON + web search overhead)
+  - Guide questions: 500 (JSON array with recommended fields)
   - Stock recommend: 400 (one JSON object)
 - Don't pad "just in case" — it encourages verbose output.
 

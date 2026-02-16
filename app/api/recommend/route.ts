@@ -242,7 +242,7 @@ Search Swedish retailers, verify product page URL, return JSON.`;
       try {
         response = await callAnthropicWithRetry({
           model: "claude-haiku-4-5-20251001",
-          max_tokens: 512,
+          max_tokens: 1024,
           temperature: 0,
           system: [
             {
@@ -274,10 +274,9 @@ Search Swedish retailers, verify product page URL, return JSON.`;
       const textBlocks = response.content.filter(
         (block): block is Anthropic.TextBlock => block.type === "text",
       );
-      const fullText = textBlocks.map((b) => b.text).join("");
 
-      if (!fullText) {
-        console.warn(`[recommend] Attempt ${attempt + 1}: No text in response. Block types: ${response.content.map((b) => b.type).join(", ")}`);
+      if (textBlocks.length === 0) {
+        console.warn(`[recommend] Attempt ${attempt + 1}: No text blocks. Block types: ${response.content.map((b) => b.type).join(", ")}`);
         if (attempt === MAX_ATTEMPTS - 1) {
           return NextResponse.json(
             { success: false, error: err.noResult },
@@ -287,9 +286,25 @@ Search Swedish retailers, verify product page URL, return JSON.`;
         continue;
       }
 
-      const jsonMatch = fullText.match(/\{[\s\S]*\}/);
+      const fullText = textBlocks.map((b) => b.text).join("");
+
+      // With web search, intermediate text blocks contain "Let me search..."
+      // The JSON is typically in the LAST text block. Try blocks in reverse.
+      let jsonMatch: RegExpMatchArray | null = null;
+      for (let i = textBlocks.length - 1; i >= 0; i--) {
+        const m = textBlocks[i].text.match(/\{[\s\S]*\}/);
+        if (m) {
+          jsonMatch = m;
+          break;
+        }
+      }
+      // Fallback: try the joined text
       if (!jsonMatch) {
-        console.warn(`[recommend] Attempt ${attempt + 1}: No JSON found in response text: "${fullText.slice(0, 200)}"`);
+        jsonMatch = fullText.match(/\{[\s\S]*\}/);
+      }
+
+      if (!jsonMatch) {
+        console.warn(`[recommend] Attempt ${attempt + 1}: No JSON found in ${textBlocks.length} text block(s): "${fullText.slice(0, 200)}"`);
         if (attempt === MAX_ATTEMPTS - 1) {
           return NextResponse.json(
             { success: false, error: err.parseFail },
