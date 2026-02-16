@@ -25,6 +25,12 @@
     "balanced": "Balanserad",
     "bestQuality": "Bäst kvalitet"
   },
+  "Suggestions": {
+    "title": "Prova att ändra:",
+    "broadenBudget": "Bredda budget",
+    "lowerQuality": "Sänk kvalitetskrav",
+    "changeSearch": "Ändra sökning"
+  },
   "Guide": {
     "skip": "Hoppa över",
     "search": "Hitta produkt",

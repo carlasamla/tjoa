@@ -16,6 +16,7 @@ import { ProductCard } from "@/app/components/ProductCard";
 import { ClarificationCard } from "@/app/components/ClarificationCard";
 import { LoadingAnimation } from "@/app/components/LoadingAnimation";
 import { GuideQuestions } from "@/app/components/GuideQuestions";
+import { SearchFilterSuggestions } from "@/app/components/SearchFilterSuggestions";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
 import { Footer } from "@/app/components/Footer";
 
@@ -83,13 +84,16 @@ export default function Home() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [guideQuestions, setGuideQuestions] = useState<GuideQuestion[] | null>(null);
+  const [lastPreferences, setLastPreferences] = useState<UserPreferences | null>(null);
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Prevent rapid-fire duplicate requests (2 second cooldown)
   const lastSubmitRef = useRef<number>(0);
   const COOLDOWN_MS = 2000;
 
   const doSearch = useCallback(
-    async (searchQuery: string, guideAnswers?: GuideAnswer[], skipClarification?: boolean) => {
+    async (searchQuery: string, guideAnswers?: GuideAnswer[], skipClarification?: boolean, prefsOverride?: UserPreferences) => {
       setPhase("searching");
       setError(null);
       setResult(null);
@@ -97,9 +101,10 @@ export default function Home() {
       setSearchId(null);
       setGuideQuestions(null);
 
-      const preferences = guideAnswers
-        ? preferencesFromGuide(guideAnswers)
-        : DEFAULT_PREFERENCES;
+      const preferences = prefsOverride
+        ?? (guideAnswers ? preferencesFromGuide(guideAnswers) : DEFAULT_PREFERENCES);
+
+      setLastPreferences(preferences);
 
       try {
         const res = await fetch("/api/recommend", {
@@ -186,6 +191,29 @@ export default function Home() {
     doSearch(query);
   }, [query, doSearch]);
 
+  const handleBroadenBudget = useCallback(() => {
+    if (!lastPreferences) return;
+    const broader: UserPreferences = {
+      ...lastPreferences,
+      minPrice: 0,
+      maxPrice: 1000000,
+    };
+    doSearch(query, undefined, true, broader);
+  }, [query, lastPreferences, doSearch]);
+
+  const handleLowerQuality = useCallback(() => {
+    if (!lastPreferences) return;
+    const lower: UserPreferences = {
+      ...lastPreferences,
+      qualityPriority: 10,
+    };
+    doSearch(query, undefined, true, lower);
+  }, [query, lastPreferences, doSearch]);
+
+  const handleChangeSearch = useCallback(() => {
+    searchInputRef.current?.focus();
+  }, []);
+
   const isLoading = phase === "guide-loading" || phase === "searching";
 
   return (
@@ -202,6 +230,7 @@ export default function Home() {
           onQueryChange={setQuery}
           onSubmit={handleSearch}
           isLoading={isLoading}
+          inputRef={searchInputRef}
         />
 
         {phase === "guide-loading" && (
@@ -233,7 +262,15 @@ export default function Home() {
         )}
 
         {error && phase === "idle" && (
-          <p className="mt-8 text-center text-sm text-muted">{error}</p>
+          <>
+            <p className="mt-8 text-center text-sm text-muted">{error}</p>
+            <SearchFilterSuggestions
+              lastPreferences={lastPreferences}
+              onBroadenBudget={handleBroadenBudget}
+              onLowerQuality={handleLowerQuality}
+              onChangeSearch={handleChangeSearch}
+            />
+          </>
         )}
       </main>
 
