@@ -75,19 +75,44 @@ Language: ${langName}
 
 Generate follow-up questions to help find the perfect product.`;
 
-    const response = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 300,
-      temperature: 0,
-      system: [
-        {
-          type: "text",
-          text: SYSTEM_PROMPT,
-          cache_control: { type: "ephemeral" },
-        },
-      ],
-      messages: [{ role: "user", content: msg }],
-    });
+    let response;
+    for (let retry = 0; retry <= 2; retry++) {
+      try {
+        response = await anthropic.messages.create({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 512,
+          temperature: 0,
+          system: [
+            {
+              type: "text",
+              text: SYSTEM_PROMPT,
+              cache_control: { type: "ephemeral" },
+            },
+          ],
+          messages: [{ role: "user", content: msg }],
+        });
+        break;
+      } catch (apiErr) {
+        const status =
+          apiErr instanceof Error && "status" in apiErr
+            ? (apiErr as { status: number }).status
+            : 0;
+        if ((status === 429 || status === 529) && retry < 2) {
+          const delay = Math.min(1000 * 2 ** retry, 8000);
+          console.warn(`[guide] Retryable error (${status}), retry in ${delay}ms`);
+          await new Promise((r) => setTimeout(r, delay));
+          continue;
+        }
+        throw apiErr;
+      }
+    }
+
+    if (!response) {
+      return NextResponse.json(
+        { success: false, error: err.failed },
+        { status: 500 },
+      );
+    }
 
     const textBlocks = response.content.filter(
       (block): block is Anthropic.TextBlock => block.type === "text",
