@@ -25,6 +25,12 @@
     "balanced": "Balanced",
     "bestQuality": "Best quality"
   },
+  "Suggestions": {
+    "title": "Try changing:",
+    "broadenBudget": "Broaden budget",
+    "lowerQuality": "Lower quality",
+    "changeSearch": "Change search"
+  },
   "Guide": {
     "skip": "Skip",
     "search": "Find product",

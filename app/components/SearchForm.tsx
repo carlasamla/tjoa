@@ -10,6 +10,7 @@ interface SearchFormProps {
   isLoading: boolean;
   placeholderKey?: string;
   buttonKey?: string;
+  inputRef?: React.Ref<HTMLInputElement>;
 }
 
 export function SearchForm({
@@ -19,6 +20,7 @@ export function SearchForm({
   isLoading,
   placeholderKey = "Search",
   buttonKey = "Search",
+  inputRef,
 }: SearchFormProps) {
   const tp = useTranslations(placeholderKey);
   const tb = useTranslations(buttonKey);
@@ -32,6 +34,7 @@ export function SearchForm({
       className="flex w-full max-w-md flex-col items-center gap-3"
     >
       <Input
+        ref={inputRef}
         type="text"
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
