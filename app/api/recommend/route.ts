@@ -30,9 +30,11 @@ RULES:
 3. SWEDISH RETAILERS ONLY: Elgiganten, NetOnNet, Webhallen, Kjell, CDON, Dustin, Komplett, MediaMarkt, IKEA.
 4. IN STOCK + numeric SEK price. Skip "Slut i lager", "Kontakta butik".
 5. Recommend the product itself, not accessories.
-6. Always return a result. If no exact match, find closest and explain.
+6. MUST ALWAYS return a product with a valid buyLink. No exact match → find closest alternative, explain compromise in reason. Never return empty or without a link.
 7. CLOTHING/SHOES: If size specified in preferences, product MUST be available in that size. Include size in search terms.
 8. Use guide answers to narrow search. They contain user's exact preferences (size, budget, use case, etc.).
+9. If budget is too narrow or specs conflict, recommend closest match within a reasonable range and note the compromise.
+10. If first retailer has no match, try others. Exhaust all options before compromising on specs.
 
 SEARCH: Parse query + guide answers → search 2-3 Swedish retailers → compare → verify product page → pick best.
 
@@ -137,14 +139,14 @@ function hasValidPrice(price: string): boolean {
 const errorMessages = {
   sv: {
     emptyQuery: "Berätta vad du vill köpa.",
-    noResult: "Kunde inte hitta en rekommendation.",
-    parseFail: "Kunde inte tolka svaret.",
+    noResult: "Kunde inte hitta en produkt som matchar. Prova att ändra din sökning eller justera budget.",
+    parseFail: "Kunde inte hitta en passande produkt. Prova att bredda din sökning eller ändra inställningar.",
     overloaded: "Tjänsten är tillfälligt överbelastad. Försök igen om en stund.",
   },
   en: {
     emptyQuery: "Please tell us what you want to buy.",
-    noResult: "No recommendation could be generated.",
-    parseFail: "Could not parse recommendation.",
+    noResult: "Couldn't find a matching product. Try changing your search or adjusting your budget.",
+    parseFail: "Couldn't find a suitable product. Try broadening your search or changing preferences.",
     overloaded: "Service is temporarily overloaded. Please try again shortly.",
   },
 } as const;
@@ -411,8 +413,12 @@ Search Swedish retailers, verify product page URL, return JSON.`;
         }
       }
       if (typeMismatchFound) {
-        parsed = null;
-        continue;
+        if (attempt < MAX_ATTEMPTS - 1) {
+          parsed = null;
+          continue;
+        }
+        // Last attempt: keep imperfect result rather than returning nothing
+        break;
       }
 
       // Check RAM mismatch: if query specifies RAM, product should have at least that amount

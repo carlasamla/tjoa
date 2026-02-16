@@ -5,7 +5,7 @@
   },
   "Page": {
     "title": "Vad vill du köpa?",
-    "error": "Kunde inte hitta en rekommendation.",
+    "error": "Kunde inte hitta en passande produkt. Prova att ändra din sökning eller justera inställningar.",
     "genericError": "Något gick fel. Försök igen."
   },
   "Search": {
