@@ -28,8 +28,10 @@ RULES:
 4. IN STOCK + numeric SEK price. Skip "Slut i lager", "Kontakta butik".
 5. Recommend the product itself, not accessories.
 6. Always return a result. If no exact match, find closest and explain.
+7. CLOTHING/SHOES: If size specified in preferences, product MUST be available in that size. Include size in search terms.
+8. Use guide answers to narrow search. They contain user's exact preferences (size, budget, use case, etc.).
 
-SEARCH: Parse query → search 2-3 Swedish retailers → compare → verify product page → pick best.
+SEARCH: Parse query + guide answers → search 2-3 Swedish retailers → compare → verify product page → pick best.
 
 JSON format:
 {"productName":"Full name with specs","price":"XX XXX kr","reason":"1-2 casual sentences in requested language. No <cite> tags.","summary":"","buyLink":"https://retailer.se/product/url","imageUrl":"URL or null","retailer":"Name"}`;
@@ -223,7 +225,7 @@ export async function POST(request: NextRequest) {
 
     const msg = `Buy: "${query.trim()}"
 Budget: ${preferences.minPrice}–${preferences.maxPrice} kr. Priority: ${prio}.
-Reason in ${langName}.${guideContext}${guideContext ? "\nIf a SIZE was specified (S/M/L/XL or shoe size), product MUST be in that size. Include size in search." : ""}
+Reason in ${langName}.${guideContext}
 Search Swedish retailers, verify product page URL, return JSON.`;
 
     const messages: Anthropic.MessageParam[] = [

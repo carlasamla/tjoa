@@ -56,6 +56,7 @@ export interface GuideQuestion {
   id: string;
   question: string;
   options: string[];
+  recommended: string;
 }
 
 export interface GuideResponse {

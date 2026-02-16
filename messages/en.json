@@ -10,8 +10,7 @@
   },
   "Search": {
     "placeholder": "running shoes, jacket, coffee maker...",
-    "button": "Pick one for me",
-    "guideButton": "Help me choose"
+    "button": "Pick one for me"
   },
   "Product": {
     "buyOn": "Buy on {retailer}",
@@ -29,7 +28,6 @@
   "Guide": {
     "skip": "Skip",
     "search": "Find product",
-    "searchAnyway": "Find product",
     "loading": "Generating questions...",
     "error": "Could not generate questions. Searching directly..."
   },

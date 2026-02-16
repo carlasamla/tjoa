@@ -16,16 +16,16 @@ const guideCache = new ResponseCache<{ questions: GuideQuestion[] }>({
 // Allow max 5 requests per minute per IP
 const rateLimiter = new RateLimiter({ maxRequests: 5, windowSeconds: 60 });
 
-const SYSTEM_PROMPT = `Generate 3-5 follow-up questions to narrow down a product search. Each with 3-4 short options (1-5 words).
+const SYSTEM_PROMPT = `Generate 3-5 follow-up questions to narrow down a product search. Each with 3-4 short options (1-5 words). For each question, pick the BEST default option ("recommended") — the most popular/sensible choice for most people.
 
 Rules:
 - Relevant to product type. Don't repeat info already in query.
-- CLOTHING/SHOES: First question MUST be size (clothing: XS/S/M/L/XL, shoes: EU 36-37/38-39/40-41/42-43/44-45). Skip if size already in query.
-- Second-to-last: budget question with category-appropriate SEK ranges.
-- Last: priority question ("Lägsta pris"/"Bäst värde"/"Premiumkvalitet").
+- CLOTHING/SHOES: First question MUST be size (clothing: XS/S/M/L/XL, shoes: EU 36-37/38-39/40-41/42-43/44-45). Skip if size already in query. Recommended: M for clothing, EU 42-43 for shoes.
+- Second-to-last: budget question with category-appropriate SEK ranges. Recommended: middle range.
+- Last: priority question ("Lägsta pris"/"Bäst värde"/"Premiumkvalitet"). Recommended: "Bäst värde".
 - Match query language (Swedish/English).
 
-Return ONLY JSON: [{"id":"q1","question":"...","options":["...","..."]}]`;
+Return ONLY JSON: [{"id":"q1","question":"...","options":["A","B","C"],"recommended":"B"}]`;
 
 const errorMessages = {
   sv: {
@@ -114,7 +114,7 @@ Generate follow-up questions to help find the perfect product.`;
       );
     }
 
-    // Validate structure
+    // Validate structure and ensure recommended is set
     questions = questions
       .filter(
         (q) =>
@@ -123,6 +123,12 @@ Generate follow-up questions to help find the perfect product.`;
           Array.isArray(q.options) &&
           q.options.length >= 2,
       )
+      .map((q) => ({
+        ...q,
+        recommended: q.recommended && q.options.includes(q.recommended)
+          ? q.recommended
+          : q.options[Math.floor(q.options.length / 2)],
+      }))
       .slice(0, 5);
 
     if (questions.length === 0) {
