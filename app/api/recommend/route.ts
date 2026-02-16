@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import crypto from "crypto";
-import type { ProductRecommendation } from "@/app/lib/types";
+import type {
+  ProductRecommendation,
+  ClarificationQuestion,
+} from "@/app/lib/types";
 import { toAffiliateLink } from "@/app/lib/affiliate-links";
 import { analytics } from "@/app/lib/analytics";
 import { ResponseCache, RateLimiter, buildCacheKey } from "@/app/lib/api-cache";
@@ -35,6 +38,21 @@ SEARCH: Parse query + guide answers → search 2-3 Swedish retailers → compare
 
 JSON format:
 {"productName":"Full name with specs","price":"XX XXX kr","reason":"1-2 casual sentences in requested language. No <cite> tags.","summary":"","buyLink":"https://retailer.se/product/url","imageUrl":"URL or null","retailer":"Name"}`;
+
+const CLARIFY_PROMPT = `You are a product search assistant for Swedish retailers. Your job is to decide if a user's query is specific enough to find one good product, or if you need to ask a clarifying question first.
+
+Return ONLY a JSON object, no other text.
+
+If the query is SPECIFIC ENOUGH → return: {"needsClarification":false}
+If the query is TOO BROAD → return: {"needsClarification":true,"question":"...","options":["...","..","..",".."]}
+
+Rules:
+- A query is specific enough if it clearly describes a type/category of product. Examples: "löparskor" (running shoes), "espressomaskin" (espresso machine), "gaming headset", "trådlös mus" (wireless mouse).
+- A query is TOO BROAD if there are many very different sub-categories and the user hasn't specified which one. Examples: "skor" (shoes — could be running, hiking, dress, sneakers...), "kläder" (clothes — could be jacket, pants, shirt...), "elektronik" (electronics — could be anything), "möbler" (furniture — could be chair, table, sofa...).
+- The question should be short and friendly, asking what kind/type they want.
+- Provide 3-4 specific options that represent the most common sub-categories.
+- Options should be short (1-3 words each).
+- IMPORTANT: Write the question and options in the SAME LANGUAGE as the user's query. If the query is in Swedish, respond in Swedish. If in English, respond in English.`;
 
 /**
  * Checks if a URL looks like a specific product page rather than a category/listing page.
@@ -190,6 +208,50 @@ export async function POST(request: NextRequest) {
         { success: false, error: err.emptyQuery },
         { status: 400 },
       );
+    }
+
+    // --- Clarification check: ask the AI if the query is too broad ---
+    if (!body.skipClarification) {
+      try {
+        const clarifyResponse = await callAnthropicWithRetry({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 256,
+          system: CLARIFY_PROMPT,
+          messages: [{ role: "user", content: query.trim() }],
+        });
+
+        const clarifyText = clarifyResponse.content
+          .filter((b): b is Anthropic.TextBlock => b.type === "text")
+          .map((b) => b.text)
+          .join("");
+
+        const clarifyJson = clarifyText.match(/\{[\s\S]*\}/);
+        if (clarifyJson) {
+          const clarifyParsed = JSON.parse(clarifyJson[0]);
+          if (
+            clarifyParsed.needsClarification &&
+            clarifyParsed.question &&
+            Array.isArray(clarifyParsed.options)
+          ) {
+            console.log(
+              `[recommend] Query "${query.trim()}" needs clarification: "${clarifyParsed.question}"`,
+            );
+            return NextResponse.json({
+              success: true,
+              clarification: {
+                question: clarifyParsed.question,
+                options: clarifyParsed.options,
+              } satisfies ClarificationQuestion,
+            });
+          }
+        }
+      } catch (clarifyError) {
+        // If clarification fails, just proceed with the recommendation
+        console.warn(
+          "[recommend] Clarification check failed, proceeding with recommendation:",
+          clarifyError instanceof Error ? clarifyError.message : String(clarifyError),
+        );
+      }
     }
 
     // Check cache first — return cached result for identical queries

@@ -21,9 +21,15 @@ export interface RecommendRequest {
   locale: string;
 }
 
+export interface ClarificationQuestion {
+  question: string;
+  options: string[];
+}
+
 export interface RecommendResponse {
   success: boolean;
   recommendation?: ProductRecommendation;
+  clarification?: ClarificationQuestion;
   searchId?: string;
   error?: string;
 }

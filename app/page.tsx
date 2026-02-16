@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import type {
   UserPreferences,
   ProductRecommendation,
+  ClarificationQuestion,
   RecommendResponse,
   GuideQuestion,
   GuideAnswer,
@@ -12,6 +13,7 @@ import type {
 } from "@/app/lib/types";
 import { SearchForm } from "@/app/components/SearchForm";
 import { ProductCard } from "@/app/components/ProductCard";
+import { ClarificationCard } from "@/app/components/ClarificationCard";
 import { LoadingAnimation } from "@/app/components/LoadingAnimation";
 import { GuideQuestions } from "@/app/components/GuideQuestions";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
@@ -75,6 +77,8 @@ export default function Home() {
 
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<ProductRecommendation | null>(null);
+  const [clarification, setClarification] =
+    useState<ClarificationQuestion | null>(null);
   const [searchId, setSearchId] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -85,10 +89,11 @@ export default function Home() {
   const COOLDOWN_MS = 2000;
 
   const doSearch = useCallback(
-    async (guideAnswers?: GuideAnswer[]) => {
+    async (searchQuery: string, guideAnswers?: GuideAnswer[], skipClarification?: boolean) => {
       setPhase("searching");
       setError(null);
       setResult(null);
+      setClarification(null);
       setSearchId(null);
       setGuideQuestions(null);
 
@@ -100,11 +105,19 @@ export default function Home() {
         const res = await fetch("/api/recommend", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query, preferences, locale, guideAnswers }),
+          body: JSON.stringify({
+            query: searchQuery,
+            preferences,
+            locale,
+            guideAnswers,
+            skipClarification: skipClarification || false,
+          }),
         });
         const data: RecommendResponse = await res.json();
 
-        if (data.success && data.recommendation) {
+        if (data.success && data.clarification) {
+          setClarification(data.clarification);
+        } else if (data.success && data.recommendation) {
           setResult(data.recommendation);
           setSearchId(data.searchId || null);
         } else {
@@ -116,7 +129,7 @@ export default function Home() {
         setPhase("idle");
       }
     },
-    [query, locale, t],
+    [locale, t],
   );
 
   const handleSearch = useCallback(() => {
@@ -129,6 +142,7 @@ export default function Home() {
     setPhase("guide-loading");
     setError(null);
     setResult(null);
+    setClarification(null);
     setSearchId(null);
     setGuideQuestions(null);
 
@@ -144,25 +158,33 @@ export default function Home() {
           setPhase("guide");
         } else {
           // Guide failed — search directly
-          doSearch();
+          doSearch(query);
         }
       })
       .catch(() => {
         // Guide failed — search directly
-        doSearch();
+        doSearch(query);
       });
   }, [query, locale, doSearch]);
 
   const handleGuideSubmit = useCallback(
     (answers: GuideAnswer[]) => {
-      doSearch(answers);
+      doSearch(query, answers);
+    },
+    [query, doSearch],
+  );
+
+  const handleClarificationSelect = useCallback(
+    (refinedQuery: string) => {
+      setQuery(refinedQuery);
+      doSearch(refinedQuery, undefined, true);
     },
     [doSearch],
   );
 
   const handleGuideSkip = useCallback(() => {
-    doSearch();
-  }, [doSearch]);
+    doSearch(query);
+  }, [query, doSearch]);
 
   const isLoading = phase === "guide-loading" || phase === "searching";
 
@@ -196,6 +218,15 @@ export default function Home() {
         )}
 
         {phase === "searching" && <LoadingAnimation />}
+
+        {clarification && phase === "idle" && (
+          <ClarificationCard
+            clarification={clarification}
+            originalQuery={query}
+            onSelect={handleClarificationSelect}
+            isLoading={isLoading}
+          />
+        )}
 
         {result && phase === "idle" && (
           <ProductCard recommendation={result} searchId={searchId ?? undefined} />
