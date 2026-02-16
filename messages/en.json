@@ -5,7 +5,7 @@
   },
   "Page": {
     "title": "What do you want to buy?",
-    "error": "Could not find a recommendation.",
+    "error": "Couldn't find a suitable product. Try changing your search or adjusting preferences.",
     "genericError": "Something went wrong. Please try again."
   },
   "Search": {
