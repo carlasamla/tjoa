@@ -10,8 +10,7 @@
   },
   "Search": {
     "placeholder": "löparskor, jacka, kaffemaskin...",
-    "button": "Välj åt mig",
-    "guideButton": "Hjälp mig välja"
+    "button": "Välj åt mig"
   },
   "Product": {
     "buyOn": "Köp på {retailer}",
@@ -29,7 +28,6 @@
   "Guide": {
     "skip": "Hoppa över",
     "search": "Hitta produkt",
-    "searchAnyway": "Hitta produkt",
     "loading": "Genererar frågor...",
     "error": "Kunde inte generera frågor. Söker direkt..."
   },

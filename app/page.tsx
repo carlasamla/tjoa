@@ -14,34 +14,10 @@ import { SearchForm } from "@/app/components/SearchForm";
 import { ProductCard } from "@/app/components/ProductCard";
 import { LoadingAnimation } from "@/app/components/LoadingAnimation";
 import { GuideQuestions } from "@/app/components/GuideQuestions";
-
-import { NavMenu } from "@/app/components/NavMenu";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
 import { Footer } from "@/app/components/Footer";
 
 type Phase = "idle" | "guide-loading" | "guide" | "searching";
-
-/**
- * Detects whether a search query is about clothing, shoes, or wearable items
- * where size matters. Used to auto-trigger the guide so users are asked about size.
- */
-function isClothingOrShoes(query: string): boolean {
-  const lower = query.toLowerCase().trim();
-  const keywords = [
-    // Swedish
-    "skor", "sko", "sneakers", "boots", "stövlar", "sandaler", "tofflor",
-    "jacka", "jackor", "tröja", "tröjor", "byxor", "jeans", "shorts",
-    "klänning", "klänningar", "skjorta", "skjortor", "t-shirt", "hoodie",
-    "kappa", "rock", "väst", "kostym", "kavaj", "blus", "topp",
-    "träningsbyxor", "löparskor", "vandringsskor", "kängor",
-    // English
-    "shoes", "shoe", "sneaker", "boot", "sandals", "slippers",
-    "jacket", "sweater", "pants", "trousers", "dress", "shirt",
-    "coat", "vest", "suit", "blazer", "blouse", "top", "hoodie",
-    "running shoes", "hiking boots", "trainers",
-  ];
-  return keywords.some((kw) => lower.includes(kw));
-}
 
 /** Wide-open defaults — the AI picks the best value on its own. */
 const DEFAULT_PREFERENCES: UserPreferences = {
@@ -51,9 +27,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
 };
 
 /**
- * Try to extract budget/quality preferences from guide answers.
- * Looks for price-related answers (containing "kr" or digits) and
- * quality-priority answers to build a more specific preference object.
+ * Extract budget/quality preferences from guide answers.
  */
 function preferencesFromGuide(answers: GuideAnswer[]): UserPreferences {
   let minPrice = 0;
@@ -63,7 +37,6 @@ function preferencesFromGuide(answers: GuideAnswer[]): UserPreferences {
   for (const a of answers) {
     const val = a.answer;
 
-    // Detect budget answers like "5 000–10 000 kr", "Under 500 kr", "Över 25 000 kr"
     const rangeMatch = val.match(/(\d[\d\s]*)\s*[–\-]\s*(\d[\d\s]*)\s*kr/i);
     if (rangeMatch) {
       minPrice = parseInt(rangeMatch[1].replace(/\s/g, ""), 10);
@@ -83,7 +56,6 @@ function preferencesFromGuide(answers: GuideAnswer[]): UserPreferences {
       continue;
     }
 
-    // Detect quality/priority answers
     const lower = val.toLowerCase();
     if (lower.includes("lägsta pris") || lower.includes("lowest price") || lower.includes("billigast")) {
       qualityPriority = 10;
@@ -107,7 +79,6 @@ export default function Home() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [guideQuestions, setGuideQuestions] = useState<GuideQuestion[] | null>(null);
-  const [guideDone, setGuideDone] = useState(false);
 
   // Prevent rapid-fire duplicate requests (2 second cooldown)
   const lastSubmitRef = useRef<number>(0);
@@ -148,70 +119,48 @@ export default function Home() {
     [query, locale, t],
   );
 
-  const triggerGuide = useCallback(async () => {
-    setGuideDone(false);
+  const handleSearch = useCallback(() => {
+    if (!query.trim()) return;
+    const now = Date.now();
+    if (now - lastSubmitRef.current < COOLDOWN_MS) return;
+    lastSubmitRef.current = now;
+
+    // Always trigger guide to ask the right questions
     setPhase("guide-loading");
     setError(null);
     setResult(null);
     setSearchId(null);
     setGuideQuestions(null);
 
-    try {
-      const res = await fetch("/api/guide", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, locale }),
+    fetch("/api/guide", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, locale }),
+    })
+      .then((res) => res.json())
+      .then((data: GuideResponse) => {
+        if (data.success && data.questions && data.questions.length > 0) {
+          setGuideQuestions(data.questions);
+          setPhase("guide");
+        } else {
+          // Guide failed — search directly
+          doSearch();
+        }
+      })
+      .catch(() => {
+        // Guide failed — search directly
+        doSearch();
       });
-      const data: GuideResponse = await res.json();
-
-      if (data.success && data.questions && data.questions.length > 0) {
-        setGuideQuestions(data.questions);
-        setPhase("guide");
-        return;
-      }
-    } catch {
-      // Guide failed
-    }
-
-    // Guide failed or returned nothing — reset to idle so user can retry
-    setPhase("idle");
-    setError(t("genericError"));
-  }, [query, locale, t]);
-
-  const handleSearch = useCallback(() => {
-    if (!query.trim()) return;
-    const now = Date.now();
-    if (now - lastSubmitRef.current < COOLDOWN_MS) return;
-    lastSubmitRef.current = now;
-    setGuideDone(false);
-
-    // Auto-trigger guide for clothing/shoes so the user is asked about size
-    if (isClothingOrShoes(query)) {
-      triggerGuide();
-      return;
-    }
-
-    doSearch();
-  }, [query, doSearch, triggerGuide]);
-
-  const handleGuide = useCallback(() => {
-    if (!query.trim()) return;
-    const now = Date.now();
-    if (now - lastSubmitRef.current < COOLDOWN_MS) return;
-    lastSubmitRef.current = now;
-    triggerGuide();
-  }, [query, triggerGuide]);
+  }, [query, locale, doSearch]);
 
   const handleGuideSubmit = useCallback(
     (answers: GuideAnswer[]) => {
-      setGuideDone(true);
       doSearch(answers);
     },
     [doSearch],
   );
 
   const handleGuideSkip = useCallback(() => {
-    setGuideDone(true);
     doSearch();
   }, [doSearch]);
 
@@ -222,8 +171,6 @@ export default function Home() {
       <main className="relative flex flex-1 flex-col items-center justify-center px-4 pb-16">
         <ThemeToggle />
 
-        <NavMenu />
-
         <p className="mb-2 text-center text-lg text-muted">
           {t("title")}
         </p>
@@ -232,9 +179,7 @@ export default function Home() {
           query={query}
           onQueryChange={setQuery}
           onSubmit={handleSearch}
-          onGuide={guideDone ? undefined : handleGuide}
           isLoading={isLoading}
-          guideActive={phase === "guide-loading" || phase === "guide"}
         />
 
         {phase === "guide-loading" && (
@@ -257,7 +202,7 @@ export default function Home() {
         )}
 
         {error && phase === "idle" && (
-          <p className="mt-8 text-center text-muted">{error}</p>
+          <p className="mt-8 text-center text-sm text-muted">{error}</p>
         )}
       </main>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { ToggleGroup } from "@base-ui/react/toggle-group";
 import { Toggle } from "@base-ui/react/toggle";
@@ -23,14 +23,22 @@ export function GuideQuestions({
   const t = useTranslations("Guide");
   const [selections, setSelections] = useState<Record<string, string>>({});
 
-  const hasAnyAnswer = questions.some((q) => selections[q.id]);
+  // Auto-select recommended options on mount
+  useEffect(() => {
+    const defaults: Record<string, string> = {};
+    for (const q of questions) {
+      if (q.recommended && q.options.includes(q.recommended)) {
+        defaults[q.id] = q.recommended;
+      }
+    }
+    setSelections(defaults);
+  }, [questions]);
 
-  const handleOptionChange = (questionId: string, question: string, values: string[]) => {
+  const handleOptionChange = (questionId: string, values: string[]) => {
     const value = values[0];
     if (value) {
       setSelections((prev) => ({ ...prev, [questionId]: value }));
     } else {
-      // Deselected — remove the answer
       setSelections((prev) => {
         const next = { ...prev };
         delete next[questionId];
@@ -61,7 +69,7 @@ export function GuideQuestions({
             <p className="mb-2 text-sm text-foreground">{q.question}</p>
             <ToggleGroup
               value={selections[q.id] ? [selections[q.id]] : []}
-              onValueChange={(values) => handleOptionChange(q.id, q.question, values)}
+              onValueChange={(values) => handleOptionChange(q.id, values)}
               className="flex flex-wrap gap-2"
             >
               {q.options.map((option) => (
@@ -97,7 +105,7 @@ export function GuideQuestions({
           disabled={isLoading}
           className="rounded-lg bg-foreground px-5 py-2 text-sm font-semibold text-background transition-colors hover:bg-foreground/90 disabled:opacity-40"
         >
-          {hasAnyAnswer ? t("search") : t("searchAnyway")}
+          {t("search")}
         </button>
       </div>
     </div>

@@ -7,9 +7,7 @@ interface SearchFormProps {
   query: string;
   onQueryChange: (q: string) => void;
   onSubmit: () => void;
-  onGuide?: () => void;
   isLoading: boolean;
-  guideActive?: boolean;
   placeholderKey?: string;
   buttonKey?: string;
 }
@@ -18,9 +16,7 @@ export function SearchForm({
   query,
   onQueryChange,
   onSubmit,
-  onGuide,
   isLoading,
-  guideActive = false,
   placeholderKey = "Search",
   buttonKey = "Search",
 }: SearchFormProps) {
@@ -43,31 +39,13 @@ export function SearchForm({
         className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-center text-base placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-foreground/20 disabled:opacity-40"
         disabled={isLoading}
       />
-      <div className="flex gap-3">
-        {!guideActive && (
-          <button
-            type="submit"
-            disabled={isLoading || !query.trim()}
-            className="rounded-lg bg-white px-6 py-2 text-sm font-semibold text-black transition-colors hover:bg-white/90 dark:bg-white dark:text-black dark:hover:bg-white/90 disabled:opacity-40"
-          >
-            {tb("button")}
-          </button>
-        )}
-        {onGuide && (
-          <button
-            type="button"
-            disabled={isLoading || !query.trim()}
-            onClick={guideActive ? undefined : onGuide}
-            className={
-              guideActive
-                ? "rounded-lg bg-foreground px-6 py-2 text-sm font-semibold text-background cursor-default"
-                : "rounded-lg border border-border px-6 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-foreground/10 disabled:opacity-40"
-            }
-          >
-            {tb("guideButton")}
-          </button>
-        )}
-      </div>
+      <button
+        type="submit"
+        disabled={isLoading || !query.trim()}
+        className="rounded-lg bg-foreground px-6 py-2 text-sm font-semibold text-background transition-colors hover:bg-foreground/90 disabled:opacity-40"
+      >
+        {tb("button")}
+      </button>
     </form>
   );
 }
